@@ -100,6 +100,7 @@ func TestCreateAndDestroyMultipleInstancesWithSameDatadir(t *testing.T) {
 		LogFormat:      LogFormatNoColors,
 		MetricsEnabled: false,
 		BlockRetries:   5,
+		Nat:            "none",
 	}
 
 	for range 2 {

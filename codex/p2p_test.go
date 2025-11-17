@@ -36,6 +36,7 @@ func TestConnectWithAddress(t *testing.T) {
 		LogFormat:      LogFormatNoColors,
 		MetricsEnabled: false,
 		DiscoveryPort:  8090,
+		Nat:            "none",
 	})
 	if err != nil {
 		t.Fatalf("Failed to create codex1: %v", err)
