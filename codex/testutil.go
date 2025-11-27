@@ -97,6 +97,19 @@ func uploadHelper(t *testing.T, codex *CodexNode) (string, int) {
 	return cid, len
 }
 
+func uploadData(t *testing.T, codex *CodexNode, data []byte) (string, int) {
+	t.Helper()
+
+	buf := bytes.NewBuffer(data)
+	len := buf.Len()
+	cid, err := codex.UploadReader(context.Background(), UploadOptions{Filepath: "hello.txt"}, buf)
+	if err != nil {
+		t.Fatalf("Error happened during upload: %v\n", err)
+	}
+
+	return cid, len
+}
+
 func uploadBigFileHelper(t *testing.T, codex *CodexNode) (string, int) {
 	t.Helper()
 

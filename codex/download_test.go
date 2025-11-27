@@ -1,10 +1,12 @@
 package codex
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestDownloadStream(t *testing.T) {
@@ -176,5 +178,184 @@ func TestDownloadInitWithNotExistingCid(t *testing.T) {
 
 	if err := codex.DownloadInit("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", DownloadInitOptions{}); err == nil {
 		t.Fatal("expected error when initializing download for non-existent cid")
+	}
+}
+
+func TestDownloadWithTwoNodes(t *testing.T) {
+	var node1, node2 *CodexNode
+	var err error
+
+	t.Cleanup(func() {
+		if node1 != nil {
+			if err := node1.Stop(); err != nil {
+				t.Logf("cleanup codex1: %v", err)
+			}
+
+			if err := node1.Destroy(); err != nil {
+				t.Logf("cleanup codex1: %v", err)
+			}
+		}
+
+		if node2 != nil {
+			if err := node2.Stop(); err != nil {
+				t.Logf("cleanup codex2: %v", err)
+			}
+
+			if err := node2.Destroy(); err != nil {
+				t.Logf("cleanup codex2: %v", err)
+			}
+		}
+	})
+
+	node1, err = New(Config{
+		DataDir:        t.TempDir(),
+		LogFormat:      LogFormatNoColors,
+		MetricsEnabled: false,
+		DiscoveryPort:  8100,
+		Nat:            "none",
+	})
+	if err != nil {
+		t.Fatalf("Failed to create codex1: %v", err)
+	}
+
+	if err := node1.Start(); err != nil {
+		t.Fatalf("Failed to start codex1: %v", err)
+	}
+
+	info1, err := node1.Debug()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	spr, err := node1.Spr()
+	if err != nil {
+		t.Fatalf("Failed to get bootstrap spr: %v", err)
+	}
+
+	t.Logf("spr: %s, info.spr: %s", spr, info1.Spr)
+
+	bootstrapNodes := []string{info1.Spr}
+
+	data := []byte("Hello World!")
+	cid, _ := uploadData(t, node1, data)
+
+	node2, err = New(Config{
+		DataDir:        t.TempDir(),
+		LogFormat:      LogFormatNoColors,
+		MetricsEnabled: false,
+		DiscoveryPort:  8101,
+		Nat:            "none",
+		BootstrapNodes: bootstrapNodes,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create codex2: %v", err)
+	}
+
+	if err := node2.Start(); err != nil {
+		t.Fatalf("Failed to start codex2: %v", err)
+	}
+
+	var buf bytes.Buffer
+	options := DownloadStreamOptions{
+		Writer: &buf,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = node2.DownloadStream(ctx, cid, options)
+
+	if err != nil {
+		t.Fatal("Error happened during download:", err.Error())
+	}
+
+	downloadedData := buf.Bytes()
+	if string(downloadedData) != string(data) {
+		t.Fatalf("Downloaded content does not match, expected %s got %s", data, downloadedData)
+	}
+}
+
+func TestCancellingContextWhenNodeCannotResolveCID(t *testing.T) {
+	// Set a test-specific timeout to catch if DownloadStream hangs
+	testTimeout := time.AfterFunc(10*time.Second, func() {
+		panic("Test exceeded 10 second timeout - DownloadStream likely not respecting context cancellation")
+	})
+	defer testTimeout.Stop()
+
+	var node1, node2 *CodexNode
+	var err error
+
+	t.Cleanup(func() {
+		if node1 != nil {
+			if err := node1.Stop(); err != nil {
+				t.Logf("cleanup codex1: %v", err)
+			}
+
+			if err := node1.Destroy(); err != nil {
+				t.Logf("cleanup codex1: %v", err)
+			}
+		}
+
+		if node2 != nil {
+			if err := node2.Stop(); err != nil {
+				t.Logf("cleanup codex2: %v", err)
+			}
+
+			if err := node2.Destroy(); err != nil {
+				t.Logf("cleanup codex2: %v", err)
+			}
+		}
+	})
+
+	node1, err = New(Config{
+		DataDir:        t.TempDir(),
+		LogFormat:      LogFormatNoColors,
+		MetricsEnabled: false,
+		DiscoveryPort:  8100,
+		Nat:            "none",
+	})
+	if err != nil {
+		t.Fatalf("Failed to create codex1: %v", err)
+	}
+
+	if err := node1.Start(); err != nil {
+		t.Fatalf("Failed to start codex1: %v", err)
+	}
+
+	data := []byte("Hello World!")
+	cid, _ := uploadData(t, node1, data)
+
+	// Notice - no bootstrap nodes, so node2 cannot resolve the CID
+	node2, err = New(Config{
+		DataDir:        t.TempDir(),
+		LogFormat:      LogFormatNoColors,
+		MetricsEnabled: false,
+		DiscoveryPort:  8101,
+		Nat:            "none",
+	})
+	if err != nil {
+		t.Fatalf("Failed to create node2: %v", err)
+	}
+
+	if err := node2.Start(); err != nil {
+		t.Fatalf("Failed to start node2: %v", err)
+	}
+
+	var buf bytes.Buffer
+	options := DownloadStreamOptions{
+		Writer: &buf,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err = node2.DownloadStream(ctx, cid, options)
+
+	if err == nil {
+		t.Fatal("Expected cancellation error, got nil")
+	}
+
+	// The error should be context.DeadlineExceeded since node2 cannot resolve the CID
+	if err != context.DeadlineExceeded && !strings.Contains(err.Error(), "context deadline exceeded") {
+		t.Logf("Got unexpected error): %v", err)
 	}
 }
