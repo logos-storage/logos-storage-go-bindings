@@ -23,6 +23,10 @@ libcodex:
 	@echo "Building libcodex..."
 	@$(MAKE) -C $(NIM_CODEX_DIR) libcodex
 
+libcodex-with-debug-api:
+	@echo "Building libcodex..."
+	@$(MAKE) -C $(NIM_CODEX_DIR) libcodex CODEX_LIB_PARAMS="-d:codex_enable_api_debug_peers"
+
 build:
 	@echo "Building Codex Go Bindings..."
 	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go build -o codex-go ./codex
