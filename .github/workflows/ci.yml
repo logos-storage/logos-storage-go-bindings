@@ -46,5 +46,8 @@ jobs:
       - name: Build codex go
         run: make
 
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+
       - name: Go test
         run: make test
