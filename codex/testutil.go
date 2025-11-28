@@ -44,6 +44,10 @@ func newCodexNode(t *testing.T, opts ...Config) *CodexNode {
 			config.DiscoveryPort = c.DiscoveryPort
 		}
 
+		if c.Nat != "" {
+			config.Nat = c.Nat
+		}
+
 		if c.StorageQuota != 0 {
 			config.StorageQuota = c.StorageQuota
 		}
