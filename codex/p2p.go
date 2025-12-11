@@ -21,7 +21,6 @@ import (
 // eg the one specified with `ListenAddresses` in `CodexConfig`.
 func (node CodexNode) Connect(peerId string, peerAddresses []string) error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cPeerId = C.CString(peerId)
 	defer C.free(unsafe.Pointer(cPeerId))

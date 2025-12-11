@@ -31,7 +31,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync/atomic"
 	"unsafe"
 )
 
@@ -84,7 +83,6 @@ func getReaderSize(r io.Reader) int64 {
 // You should use this function only if you need to manage the upload session manually.
 func (node CodexNode) UploadInit(options *UploadOptions) (string, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cFilename = C.CString(options.Filepath)
 	defer C.free(unsafe.Pointer(cFilename))
@@ -103,7 +101,6 @@ func (node CodexNode) UploadInit(options *UploadOptions) (string, error) {
 // You should use this function only if you need to manage the upload session manually.
 func (node CodexNode) UploadChunk(sessionId string, chunk []byte) error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cSessionId = C.CString(sessionId)
 	defer C.free(unsafe.Pointer(cSessionId))
@@ -127,7 +124,6 @@ func (node CodexNode) UploadChunk(sessionId string, chunk []byte) error {
 // You should use this function only if you need to manage the upload session manually.
 func (node CodexNode) UploadFinalize(sessionId string) (string, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cSessionId = C.CString(sessionId)
 	defer C.free(unsafe.Pointer(cSessionId))
@@ -144,7 +140,6 @@ func (node CodexNode) UploadFinalize(sessionId string) (string, error) {
 // It doesn't work with UploadFile.
 func (node CodexNode) UploadCancel(sessionId string) error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cSessionId = C.CString(sessionId)
 	defer C.free(unsafe.Pointer(cSessionId))
@@ -264,7 +259,6 @@ func (node CodexNode) UploadReaderAsync(ctx context.Context, options UploadOptio
 // Internally, it calls UploadInit to create the upload session.
 func (node CodexNode) UploadFile(ctx context.Context, options UploadOptions) (string, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if options.OnProgress != nil {
 		stat, err := os.Stat(options.Filepath)
@@ -307,39 +301,17 @@ func (node CodexNode) UploadFile(ctx context.Context, options UploadOptions) (st
 		return "", bridge.callError("cGoCodexUploadFile")
 	}
 
-	// Create a done channel to signal the goroutine to stop
-	// when the download is complete and avoid goroutine leaks.
-	done := make(chan struct{})
-	defer close(done)
+	_, err = bridge.waitWithContext(ctx)
 
-	channelError := make(chan error, 1)
-	var cancelled atomic.Bool
-	go func() {
-		select {
-		case <-ctx.Done():
-			channelError <- node.UploadCancel(sessionId)
-			cancelled.Store(true)
-		case <-done:
-			// Nothing to do, upload finished
-		}
-	}()
-
-	_, err = bridge.wait()
-
-	// Extract the potential cancellation error
 	var cancelErr error
-	select {
-	case cancelErr = <-channelError:
-	default:
+
+	if err == context.Canceled {
+		cancelErr = node.UploadCancel(sessionId)
 	}
 
 	if err != nil {
 		if cancelErr != nil {
 			return "", fmt.Errorf("context canceled: %v, but failed to cancel upload session: %v", ctx.Err(), cancelErr)
-		}
-
-		if cancelled.Load() {
-			return "", context.Canceled
 		}
 
 		return "", err

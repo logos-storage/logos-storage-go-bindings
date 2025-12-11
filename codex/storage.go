@@ -58,7 +58,6 @@ type Space struct {
 // Manifests returns the list of all manifests stored by the Codex node.
 func (node CodexNode) Manifests() ([]Manifest, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexStorageList(node.ctx, bridge.resp) != C.RET_OK {
 		return nil, bridge.callError("cGoCodexStorageList")
@@ -86,7 +85,6 @@ func (node CodexNode) Manifests() ([]Manifest, error) {
 // Fetch download a file from the network and store it to the local node.
 func (node CodexNode) Fetch(cid string) (Manifest, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
@@ -115,7 +113,6 @@ func (node CodexNode) Space() (Space, error) {
 	var space Space
 
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexStorageSpace(node.ctx, bridge.resp) != C.RET_OK {
 		return space, bridge.callError("cGoCodexStorageSpace")
@@ -134,7 +131,6 @@ func (node CodexNode) Space() (Space, error) {
 // from the local node. Does nothing if the dataset is not locally available.
 func (node CodexNode) Delete(cid string) error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
@@ -150,7 +146,6 @@ func (node CodexNode) Delete(cid string) error {
 // Exists checks if a given cid exists in the local storage.
 func (node CodexNode) Exists(cid string) (bool, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))

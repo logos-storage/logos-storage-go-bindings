@@ -34,10 +34,12 @@ package codex
 */
 import "C"
 import (
+	"context"
 	"errors"
 	"fmt"
 	"runtime/cgo"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -47,11 +49,12 @@ import (
 // a response pointer for receiving data from the C code,
 // and fields for storing the result and error of the call.
 type bridgeCtx struct {
-	wg     *sync.WaitGroup
-	h      cgo.Handle
-	resp   unsafe.Pointer
-	result string
-	err    error
+	wg        *sync.WaitGroup
+	h         cgo.Handle
+	resp      unsafe.Pointer
+	result    string
+	err       error
+	cancelled atomic.Bool
 
 	// Callback used for receiving progress updates during upload/download.
 	//
@@ -85,6 +88,8 @@ func (b *bridgeCtx) callError(name string) error {
 // including the cgo.Handle and the response pointer.
 func (b *bridgeCtx) free() {
 	if b.h > 0 {
+		// (*C.Resp)(b.resp).h = 0
+
 		b.h.Delete()
 		b.h = 0
 	}
@@ -116,12 +121,14 @@ func callback(ret C.int, msg *C.char, len C.size_t, resp unsafe.Pointer) {
 	}
 
 	h := cgo.Handle(m.h)
+
 	if h == 0 {
 		return
 	}
 
 	if v, ok := h.Value().(*bridgeCtx); ok {
 		switch ret {
+
 		case C.RET_PROGRESS:
 			if v.onProgress == nil {
 				return
@@ -136,22 +143,55 @@ func callback(ret C.int, msg *C.char, len C.size_t, resp unsafe.Pointer) {
 			retMsg := C.GoStringN(msg, C.int(len))
 			v.result = retMsg
 			v.err = nil
-			if v.wg != nil {
+			if !v.cancelled.Load() && v.wg != nil {
 				v.wg.Done()
 			}
+			v.free()
 		case C.RET_ERR:
 			retMsg := C.GoStringN(msg, C.int(len))
 			v.err = errors.New(retMsg)
-			if v.wg != nil {
+			if !v.cancelled.Load() && v.wg != nil {
 				v.wg.Done()
 			}
+			v.free()
 		}
 	}
 }
 
-// wait waits for the bridge context to complete its operation.
-// It returns the result and error of the operation.
 func (b *bridgeCtx) wait() (string, error) {
 	b.wg.Wait()
 	return b.result, b.err
+}
+
+// wait waits for the bridge context to complete its operation.
+// It returns the result and error of the operation.
+func (b *bridgeCtx) waitWithContext(ctx context.Context) (string, error) {
+	type result struct {
+		value string
+		err   error
+	}
+
+	done := make(chan result, 1)
+	defer close(done)
+
+	go func() {
+		b.wg.Wait()
+
+		if b.cancelled.Load() {
+			return
+		}
+
+		done <- result{value: b.result, err: b.err}
+	}()
+
+	select {
+	case res := <-done:
+		return res.value, res.err
+	case <-ctx.Done():
+		b.cancelled.Store(true)
+
+		b.wg.Done()
+
+		return "", ctx.Err()
+	}
 }

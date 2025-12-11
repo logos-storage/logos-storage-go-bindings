@@ -6,59 +6,15 @@ import (
 )
 
 func TestConnectWithAddress(t *testing.T) {
-	var node1, node2 *CodexNode
 	var err error
 
-	t.Cleanup(func() {
-		if node1 != nil {
-			if err := node1.Stop(); err != nil {
-				t.Logf("cleanup codex1: %v", err)
-			}
-
-			if err := node1.Destroy(); err != nil {
-				t.Logf("cleanup codex1: %v", err)
-			}
-		}
-
-		if node2 != nil {
-			if err := node2.Stop(); err != nil {
-				t.Logf("cleanup codex2: %v", err)
-			}
-
-			if err := node2.Destroy(); err != nil {
-				t.Logf("cleanup codex2: %v", err)
-			}
-		}
+	node1 := newCodexNode(t, Config{
+		DiscoveryPort: 8090,
 	})
 
-	node1, err = New(Config{
-		DataDir:        t.TempDir(),
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		DiscoveryPort:  8090,
-		Nat:            "none",
+	node2 := newCodexNode(t, Config{
+		DiscoveryPort: 8091,
 	})
-	if err != nil {
-		t.Fatalf("Failed to create codex1: %v", err)
-	}
-
-	if err := node1.Start(); err != nil {
-		t.Fatalf("Failed to start codex1: %v", err)
-	}
-
-	node2, err = New(Config{
-		DataDir:        t.TempDir(),
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		DiscoveryPort:  8091,
-	})
-	if err != nil {
-		t.Fatalf("Failed to create codex2: %v", err)
-	}
-
-	if err := node2.Start(); err != nil {
-		t.Fatalf("Failed to start codex2: %v", err)
-	}
 
 	info2, err := node2.Debug()
 	if err != nil {

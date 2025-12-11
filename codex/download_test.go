@@ -1,10 +1,12 @@
 package codex
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestDownloadStream(t *testing.T) {
@@ -120,10 +122,11 @@ func TestDownloadStreamCancelled(t *testing.T) {
 }
 
 func TestDownloadManual(t *testing.T) {
+	ctx := context.Background()
 	codex := newCodexNode(t)
 	cid, _ := uploadHelper(t, codex)
 
-	if err := codex.DownloadInit(cid, DownloadInitOptions{}); err != nil {
+	if err := codex.DownloadInit(ctx, cid, DownloadInitOptions{}); err != nil {
 		t.Fatal("Error when initializing download:", err)
 	}
 
@@ -145,10 +148,11 @@ func TestDownloadManual(t *testing.T) {
 }
 
 func TestDownloadManifest(t *testing.T) {
+	ctx := context.Background()
 	codex := newCodexNode(t)
 	cid, _ := uploadHelper(t, codex)
 
-	manifest, err := codex.DownloadManifest(cid)
+	manifest, err := codex.DownloadManifest(ctx, cid)
 	if err != nil {
 		t.Fatal("Error when downloading manifest:", err)
 	}
@@ -159,9 +163,10 @@ func TestDownloadManifest(t *testing.T) {
 }
 
 func TestDownloadManifestWithNotExistingCid(t *testing.T) {
+	ctx := context.Background()
 	codex := newCodexNode(t, Config{BlockRetries: 1})
 
-	manifest, err := codex.DownloadManifest("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
+	manifest, err := codex.DownloadManifest(ctx, "bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
 	if err == nil {
 		t.Fatal("Error when downloading manifest:", err)
 	}
@@ -172,9 +177,100 @@ func TestDownloadManifestWithNotExistingCid(t *testing.T) {
 }
 
 func TestDownloadInitWithNotExistingCid(t *testing.T) {
+	ctx := context.Background()
 	codex := newCodexNode(t, Config{BlockRetries: 1})
 
-	if err := codex.DownloadInit("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", DownloadInitOptions{}); err == nil {
+	if err := codex.DownloadInit(ctx, "bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", DownloadInitOptions{}); err == nil {
 		t.Fatal("expected error when initializing download for non-existent cid")
+	}
+}
+
+func TestDownloadWithTwoNodes(t *testing.T) {
+	var err error
+
+	node1 := newCodexNode(t, Config{
+		DiscoveryPort: 8100,
+	})
+
+	info1, err := node1.Debug()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	spr, err := node1.Spr()
+	if err != nil {
+		t.Fatalf("Failed to get bootstrap spr: %v", err)
+	}
+
+	t.Logf("spr: %s, info.spr: %s", spr, info1.Spr)
+
+	bootstrapNodes := []string{info1.Spr}
+
+	data := []byte("Hello World!")
+	cid, _ := uploadData(t, node1, data)
+
+	node2 := newCodexNode(t, Config{
+		DiscoveryPort:  8101,
+		BootstrapNodes: bootstrapNodes,
+	})
+
+	var buf bytes.Buffer
+	options := DownloadStreamOptions{
+		Writer: &buf,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = node2.DownloadStream(ctx, cid, options)
+
+	if err != nil {
+		t.Fatal("Error happened during download:", err.Error())
+	}
+
+	downloadedData := buf.Bytes()
+	if string(downloadedData) != string(data) {
+		t.Fatalf("Downloaded content does not match, expected %s got %s", data, downloadedData)
+	}
+}
+
+func TestCancellingContextWhenNodeCannotResolveCID(t *testing.T) {
+	var err error
+
+	node1 := newCodexNode(t, Config{
+		DiscoveryPort: 8100,
+	})
+
+	data := []byte("Hello World!")
+	cid, _ := uploadData(t, node1, data)
+
+	// Notice - no bootstrap nodes, so node2 cannot resolve the CID
+
+	node2 := newCodexNode(t, Config{
+		DiscoveryPort: 8101,
+	})
+
+	// Set a test-specific timeout to catch if DownloadStream hangs
+	testTimeout := time.AfterFunc(10*time.Second, func() {
+		panic("Test exceeded 10 second timeout - DownloadStream likely not respecting context cancellation")
+	})
+	defer testTimeout.Stop()
+
+	var buf bytes.Buffer
+	options := DownloadStreamOptions{
+		Writer: &buf,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err = node2.DownloadStream(ctx, cid, options)
+
+	if err == nil {
+		t.Fatal("Expected cancellation error, got nil")
+	}
+
+	// The error should be context.DeadlineExceeded since node2 cannot resolve the CID
+	if err != context.DeadlineExceeded && !strings.Contains(err.Error(), "context deadline exceeded") {
+		t.Fatalf("Got unexpected error): %v", err)
 	}
 }

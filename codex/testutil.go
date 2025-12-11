@@ -44,6 +44,10 @@ func newCodexNode(t *testing.T, opts ...Config) *CodexNode {
 			config.DiscoveryPort = c.DiscoveryPort
 		}
 
+		if c.Nat != "" {
+			config.Nat = c.Nat
+		}
+
 		if c.StorageQuota != 0 {
 			config.StorageQuota = c.StorageQuota
 		}
@@ -88,6 +92,19 @@ func uploadHelper(t *testing.T, codex *CodexNode) (string, int) {
 	t.Helper()
 
 	buf := bytes.NewBuffer([]byte("Hello World!"))
+	len := buf.Len()
+	cid, err := codex.UploadReader(context.Background(), UploadOptions{Filepath: "hello.txt"}, buf)
+	if err != nil {
+		t.Fatalf("Error happened during upload: %v\n", err)
+	}
+
+	return cid, len
+}
+
+func uploadData(t *testing.T, codex *CodexNode, data []byte) (string, int) {
+	t.Helper()
+
+	buf := bytes.NewBuffer(data)
 	len := buf.Len()
 	cid, err := codex.UploadReader(context.Background(), UploadOptions{Filepath: "hello.txt"}, buf)
 	if err != nil {

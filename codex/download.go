@@ -30,7 +30,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sync/atomic"
 	"unsafe"
 )
 
@@ -116,9 +115,8 @@ type Manifest struct {
 // DownloadManifest retrieves the Codex manifest from its cid.
 // The session identifier is the cid, i.e you cannot have multiple
 // sessions for a cid.
-func (node CodexNode) DownloadManifest(cid string) (Manifest, error) {
+func (node CodexNode) DownloadManifest(ctx context.Context, cid string) (Manifest, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
@@ -127,7 +125,7 @@ func (node CodexNode) DownloadManifest(cid string) (Manifest, error) {
 		return Manifest{}, bridge.callError("cGoCodexDownloadManifest")
 	}
 
-	val, err := bridge.wait()
+	val, err := bridge.waitWithContext(ctx)
 	if err != nil {
 		return Manifest{}, err
 	}
@@ -150,10 +148,9 @@ func (node CodexNode) DownloadManifest(cid string) (Manifest, error) {
 // in different places in a same call.
 func (node CodexNode) DownloadStream(ctx context.Context, cid string, options DownloadStreamOptions) error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if options.DatasetSizeAuto {
-		manifest, err := node.DownloadManifest(cid)
+		manifest, err := node.DownloadManifest(ctx, cid)
 
 		if err != nil {
 			return err
@@ -192,7 +189,7 @@ func (node CodexNode) DownloadStream(ctx context.Context, cid string, options Do
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
 
-	err := node.DownloadInit(cid, DownloadInitOptions{
+	err := node.DownloadInit(ctx, cid, DownloadInitOptions{
 		ChunkSize: options.ChunkSize,
 		Local:     options.Local,
 	})
@@ -211,39 +208,17 @@ func (node CodexNode) DownloadStream(ctx context.Context, cid string, options Do
 		return bridge.callError("cGoCodexDownloadLocal")
 	}
 
-	// Create a done channel to signal the goroutine to stop
-	// when the download is complete and avoid goroutine leaks.
-	done := make(chan struct{})
-	defer close(done)
-
-	channelError := make(chan error, 1)
-	var cancelled atomic.Bool
-	go func() {
-		select {
-		case <-ctx.Done():
-			channelError <- node.DownloadCancel(cid)
-			cancelled.Store(true)
-		case <-done:
-			// Nothing to do, download finished
-		}
-	}()
-
 	_, err = bridge.wait()
 
-	// Extract the potential cancellation error
 	var cancelError error
-	select {
-	case cancelError = <-channelError:
-	default:
+
+	if err == context.Canceled {
+		cancelError = node.DownloadCancel(cid)
 	}
 
 	if err != nil {
 		if cancelError != nil {
 			return fmt.Errorf("context canceled: %v, but failed to cancel download session: %v", ctx.Err(), cancelError)
-		}
-
-		if cancelled.Load() {
-			return context.Canceled
 		}
 
 		return err
@@ -255,9 +230,8 @@ func (node CodexNode) DownloadStream(ctx context.Context, cid string, options Do
 // DownloadInit initializes the download process for a specific CID.
 // This method should be used if you want to manage the download session
 // and the chunk downloads manually.
-func (node CodexNode) DownloadInit(cid string, options DownloadInitOptions) error {
+func (node CodexNode) DownloadInit(ctx context.Context, cid string, options DownloadInitOptions) error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
@@ -268,8 +242,9 @@ func (node CodexNode) DownloadInit(cid string, options DownloadInitOptions) erro
 		return bridge.callError("cGoCodexDownloadInit")
 	}
 
-	_, err := bridge.wait()
+	_, err := bridge.waitWithContext(ctx)
 	return err
+
 }
 
 // DownloadChunk downloads a chunk from its cid.
@@ -281,7 +256,6 @@ func (node CodexNode) DownloadInit(cid string, options DownloadInitOptions) erro
 // to free the resources.
 func (node CodexNode) DownloadChunk(cid string) ([]byte, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var bytes []byte
 
@@ -308,7 +282,6 @@ func (node CodexNode) DownloadChunk(cid string) ([]byte, error) {
 // It doesn't work with DownloadStream.
 func (node CodexNode) DownloadCancel(cid string) error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))

@@ -208,7 +208,6 @@ func (c ChunkSize) toSizeT() C.size_t {
 // with the Codex network.
 func New(config Config) (*CodexNode, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	jsonConfig, err := json.Marshal(config)
 	if err != nil {
@@ -230,7 +229,6 @@ func New(config Config) (*CodexNode, error) {
 // Start starts the Codex node.
 func (node CodexNode) Start() error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexStart(node.ctx, bridge.resp) != C.RET_OK {
 		return bridge.callError("cGoCodexStart")
@@ -251,7 +249,6 @@ func (node CodexNode) StartAsync(onDone func(error)) {
 // Stop stops the Codex node.
 func (node CodexNode) Stop() error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexStop(node.ctx, bridge.resp) != C.RET_OK {
 		return bridge.callError("cGoCodexStop")
@@ -265,7 +262,6 @@ func (node CodexNode) Stop() error {
 // The node must be stopped before calling this method.
 func (node CodexNode) Destroy() error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexClose(node.ctx, bridge.resp) != C.RET_OK {
 		return bridge.callError("cGoCodexClose")
@@ -291,7 +287,6 @@ func (node CodexNode) Destroy() error {
 // Version returns the version of the Codex node.
 func (node CodexNode) Version() (string, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexVersion(node.ctx, bridge.resp) != C.RET_OK {
 		return "", bridge.callError("cGoCodexVersion")
@@ -302,7 +297,6 @@ func (node CodexNode) Version() (string, error) {
 
 func (node CodexNode) Revision() (string, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexRevision(node.ctx, bridge.resp) != C.RET_OK {
 		return "", bridge.callError("cGoCodexRevision")
@@ -314,7 +308,6 @@ func (node CodexNode) Revision() (string, error) {
 // Repo returns the path of the data dir folder.
 func (node CodexNode) Repo() (string, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexRepo(node.ctx, bridge.resp) != C.RET_OK {
 		return "", bridge.callError("cGoCodexRepo")
@@ -325,7 +318,6 @@ func (node CodexNode) Repo() (string, error) {
 
 func (node CodexNode) Spr() (string, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexSpr(node.ctx, bridge.resp) != C.RET_OK {
 		return "", bridge.callError("cGoCodexSpr")
@@ -336,7 +328,6 @@ func (node CodexNode) Spr() (string, error) {
 
 func (node CodexNode) PeerId() (string, error) {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexPeerId(node.ctx, bridge.resp) != C.RET_OK {
 		return "", bridge.callError("cGoCodexPeerId")
