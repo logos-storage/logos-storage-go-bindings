@@ -78,21 +78,62 @@ Follow these steps to install and set up the module:
 1. Make sure your system has the [prerequisites](https://github.com/codex-storage/nim-codex) to run a local Codex node.
 
 2. Fetch the dependencies:
-   ```
+   ```sh
    make update
    ```
 
 3. Build the library:
-   ```
+   ```sh
    make libcodex
    ```
 
 You can pass flags to the Codex building step by using `CODEX_LIB_PARAMS`. For example,
 if you want to enable debug API for peers, you can build the library using:
 
-```
+```sh
 CODEX_LIB_PARAMS="-d:codex_enable_api_debug_peers=true" make libcodex
 ```
+
+or you can use a convenience `libcodex-with-debug-api` make target:
+
+```sh
+make libcodex-with-debug-api
+```
+
+To run the test, you have to make sure you have `gotestsum` installed on your system, e.g.:
+
+```sh
+go install gotest.tools/gotestsum@latest
+```
+
+Then you can run the tests as follows.
+
+To run all the tests:
+
+```sh
+make test
+```
+
+To run selected test only:
+
+```sh
+make test "TestDownloadManifest$"
+```
+
+> We use `$` to make sure we run only the `TestDownloadManifest` test.
+> Without `$` we would run all the tests starting with `TestDownloadManifest` and
+> so also `TestDownloadManifestWithNotExistingCid`
+>
+
+If you need to pass more arguments to the underlying `go test` (`gotestsum` passes
+everything after `--` to `go test`), you can use: `test-with-params` make target, e.g.:
+
+```sh
+make test-with-params ARGS='-run "TestDownloadManifest$$" -count=2'
+```
+
+> Here, we use double escape `$$` instead of just `$`, otherwise make
+> will interpret `$` as a make variable inside `ARGS`. 
 
 Now the module is ready for use in your project.
 
