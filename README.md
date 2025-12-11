@@ -257,7 +257,7 @@ whenever you want!
 When you receive a cid, you can download the `Manifest` to get information about the data:
 
 ```go
-manifest, err := codex.DownloadManifest(cid)
+manifest, err := codex.DownloadManifest(ctx, cid)
 ```
 
 It is not mandatory for downloading the data but it is really useful.
@@ -300,7 +300,7 @@ to terminate the download session.
 
 ```go
 cid := "..."
-err := codex.DownloadInit(cid, DownloadInitOptions{})
+err := codex.DownloadInit(ctx, cid, DownloadInitOptions{})
 chunk, err := codex.DownloadChunk(cid)
 err := codex.DownloadCancel(cid)
 ```

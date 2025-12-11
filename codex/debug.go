@@ -59,7 +59,6 @@ func (node CodexNode) Debug() (DebugInfo, error) {
 	var info DebugInfo
 
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	if C.cGoCodexDebug(node.ctx, bridge.resp) != C.RET_OK {
 		return info, bridge.callError("cGoCodexDebug")
@@ -82,7 +81,6 @@ func (node CodexNode) Debug() (DebugInfo, error) {
 // topic, you can pass "INFO,codexlib:TRACE".
 func (node CodexNode) UpdateLogLevel(logLevel string) error {
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cLogLevel = C.CString(string(logLevel))
 	defer C.free(unsafe.Pointer(cLogLevel))
@@ -102,7 +100,6 @@ func (node CodexNode) CodexPeerDebug(peerId string) (PeerRecord, error) {
 	var record PeerRecord
 
 	bridge := newBridgeCtx()
-	defer bridge.free()
 
 	var cPeerId = C.CString(peerId)
 	defer C.free(unsafe.Pointer(cPeerId))

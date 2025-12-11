@@ -122,10 +122,11 @@ func TestDownloadStreamCancelled(t *testing.T) {
 }
 
 func TestDownloadManual(t *testing.T) {
+	ctx := context.Background()
 	codex := newCodexNode(t)
 	cid, _ := uploadHelper(t, codex)
 
-	if err := codex.DownloadInit(cid, DownloadInitOptions{}); err != nil {
+	if err := codex.DownloadInit(ctx, cid, DownloadInitOptions{}); err != nil {
 		t.Fatal("Error when initializing download:", err)
 	}
 
@@ -147,10 +148,11 @@ func TestDownloadManual(t *testing.T) {
 }
 
 func TestDownloadManifest(t *testing.T) {
+	ctx := context.Background()
 	codex := newCodexNode(t)
 	cid, _ := uploadHelper(t, codex)
 
-	manifest, err := codex.DownloadManifest(cid)
+	manifest, err := codex.DownloadManifest(ctx, cid)
 	if err != nil {
 		t.Fatal("Error when downloading manifest:", err)
 	}
@@ -161,9 +163,10 @@ func TestDownloadManifest(t *testing.T) {
 }
 
 func TestDownloadManifestWithNotExistingCid(t *testing.T) {
+	ctx := context.Background()
 	codex := newCodexNode(t, Config{BlockRetries: 1})
 
-	manifest, err := codex.DownloadManifest("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
+	manifest, err := codex.DownloadManifest(ctx, "bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
 	if err == nil {
 		t.Fatal("Error when downloading manifest:", err)
 	}
@@ -174,53 +177,20 @@ func TestDownloadManifestWithNotExistingCid(t *testing.T) {
 }
 
 func TestDownloadInitWithNotExistingCid(t *testing.T) {
+	ctx := context.Background()
 	codex := newCodexNode(t, Config{BlockRetries: 1})
 
-	if err := codex.DownloadInit("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", DownloadInitOptions{}); err == nil {
+	if err := codex.DownloadInit(ctx, "bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", DownloadInitOptions{}); err == nil {
 		t.Fatal("expected error when initializing download for non-existent cid")
 	}
 }
 
 func TestDownloadWithTwoNodes(t *testing.T) {
-	var node1, node2 *CodexNode
 	var err error
 
-	t.Cleanup(func() {
-		if node1 != nil {
-			if err := node1.Stop(); err != nil {
-				t.Logf("cleanup codex1: %v", err)
-			}
-
-			if err := node1.Destroy(); err != nil {
-				t.Logf("cleanup codex1: %v", err)
-			}
-		}
-
-		if node2 != nil {
-			if err := node2.Stop(); err != nil {
-				t.Logf("cleanup codex2: %v", err)
-			}
-
-			if err := node2.Destroy(); err != nil {
-				t.Logf("cleanup codex2: %v", err)
-			}
-		}
+	node1 := newCodexNode(t, Config{
+		DiscoveryPort: 8100,
 	})
-
-	node1, err = New(Config{
-		DataDir:        t.TempDir(),
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		DiscoveryPort:  8100,
-		Nat:            "none",
-	})
-	if err != nil {
-		t.Fatalf("Failed to create codex1: %v", err)
-	}
-
-	if err := node1.Start(); err != nil {
-		t.Fatalf("Failed to start codex1: %v", err)
-	}
 
 	info1, err := node1.Debug()
 	if err != nil {
@@ -239,21 +209,10 @@ func TestDownloadWithTwoNodes(t *testing.T) {
 	data := []byte("Hello World!")
 	cid, _ := uploadData(t, node1, data)
 
-	node2, err = New(Config{
-		DataDir:        t.TempDir(),
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
+	node2 := newCodexNode(t, Config{
 		DiscoveryPort:  8101,
-		Nat:            "none",
 		BootstrapNodes: bootstrapNodes,
 	})
-	if err != nil {
-		t.Fatalf("Failed to create codex2: %v", err)
-	}
-
-	if err := node2.Start(); err != nil {
-		t.Fatalf("Failed to start codex2: %v", err)
-	}
 
 	var buf bytes.Buffer
 	options := DownloadStreamOptions{
@@ -275,70 +234,26 @@ func TestDownloadWithTwoNodes(t *testing.T) {
 }
 
 func TestCancellingContextWhenNodeCannotResolveCID(t *testing.T) {
-	// Set a test-specific timeout to catch if DownloadStream hangs
-	testTimeout := time.AfterFunc(10*time.Second, func() {
-		panic("Test exceeded 10 second timeout - DownloadStream likely not respecting context cancellation")
-	})
-	defer testTimeout.Stop()
-
-	var node1, node2 *CodexNode
 	var err error
 
-	t.Cleanup(func() {
-		if node1 != nil {
-			if err := node1.Stop(); err != nil {
-				t.Logf("cleanup codex1: %v", err)
-			}
-
-			if err := node1.Destroy(); err != nil {
-				t.Logf("cleanup codex1: %v", err)
-			}
-		}
-
-		if node2 != nil {
-			if err := node2.Stop(); err != nil {
-				t.Logf("cleanup codex2: %v", err)
-			}
-
-			if err := node2.Destroy(); err != nil {
-				t.Logf("cleanup codex2: %v", err)
-			}
-		}
+	node1 := newCodexNode(t, Config{
+		DiscoveryPort: 8100,
 	})
-
-	node1, err = New(Config{
-		DataDir:        t.TempDir(),
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		DiscoveryPort:  8100,
-		Nat:            "none",
-	})
-	if err != nil {
-		t.Fatalf("Failed to create codex1: %v", err)
-	}
-
-	if err := node1.Start(); err != nil {
-		t.Fatalf("Failed to start codex1: %v", err)
-	}
 
 	data := []byte("Hello World!")
 	cid, _ := uploadData(t, node1, data)
 
 	// Notice - no bootstrap nodes, so node2 cannot resolve the CID
-	node2, err = New(Config{
-		DataDir:        t.TempDir(),
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		DiscoveryPort:  8101,
-		Nat:            "none",
-	})
-	if err != nil {
-		t.Fatalf("Failed to create node2: %v", err)
-	}
 
-	if err := node2.Start(); err != nil {
-		t.Fatalf("Failed to start node2: %v", err)
-	}
+	node2 := newCodexNode(t, Config{
+		DiscoveryPort: 8101,
+	})
+
+	// Set a test-specific timeout to catch if DownloadStream hangs
+	testTimeout := time.AfterFunc(10*time.Second, func() {
+		panic("Test exceeded 10 second timeout - DownloadStream likely not respecting context cancellation")
+	})
+	defer testTimeout.Stop()
 
 	var buf bytes.Buffer
 	options := DownloadStreamOptions{
@@ -356,6 +271,6 @@ func TestCancellingContextWhenNodeCannotResolveCID(t *testing.T) {
 
 	// The error should be context.DeadlineExceeded since node2 cannot resolve the CID
 	if err != context.DeadlineExceeded && !strings.Contains(err.Error(), "context deadline exceeded") {
-		t.Logf("Got unexpected error): %v", err)
+		t.Fatalf("Got unexpected error): %v", err)
 	}
 }
