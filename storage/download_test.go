@@ -1,4 +1,4 @@
-package codex
+package storage
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 )
 
 func TestDownloadStream(t *testing.T) {
-	codex := newCodexNode(t)
-	cid, len := uploadHelper(t, codex)
+	storage := newStorageNode(t)
+	cid, len := uploadHelper(t, storage)
 
 	f, err := os.Create("testdata/hello.downloaded.txt")
 	if err != nil {
@@ -33,7 +33,7 @@ func TestDownloadStream(t *testing.T) {
 		},
 	}
 
-	if err := codex.DownloadStream(context.Background(), cid, opt); err != nil {
+	if err := storage.DownloadStream(context.Background(), cid, opt); err != nil {
 		t.Fatal("Error happened:", err.Error())
 	}
 
@@ -56,8 +56,8 @@ func TestDownloadStream(t *testing.T) {
 }
 
 func TestDownloadStreamWithAutosize(t *testing.T) {
-	codex := newCodexNode(t)
-	cid, len := uploadHelper(t, codex)
+	storage := newStorageNode(t)
+	cid, len := uploadHelper(t, storage)
 
 	totalBytes := 0
 	finalPercent := 0.0
@@ -73,7 +73,7 @@ func TestDownloadStreamWithAutosize(t *testing.T) {
 		},
 	}
 
-	if err := codex.DownloadStream(context.Background(), cid, opt); err != nil {
+	if err := storage.DownloadStream(context.Background(), cid, opt); err != nil {
 		t.Fatal("Error happened:", err.Error())
 	}
 
@@ -87,10 +87,10 @@ func TestDownloadStreamWithAutosize(t *testing.T) {
 }
 
 func TestDownloadStreamWithNotExisting(t *testing.T) {
-	codex := newCodexNode(t, Config{BlockRetries: 1})
+	storage := newStorageNode(t, Config{BlockRetries: 1})
 
 	opt := DownloadStreamOptions{}
-	if err := codex.DownloadStream(context.Background(), "bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", opt); err == nil {
+	if err := storage.DownloadStream(context.Background(), "bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", opt); err == nil {
 		t.Fatal("Error expected when downloading non-existing cid")
 	}
 }
@@ -98,12 +98,12 @@ func TestDownloadStreamWithNotExisting(t *testing.T) {
 func TestDownloadStreamCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	codex := newCodexNode(t)
-	cid, _ := uploadBigFileHelper(t, codex)
+	storage := newStorageNode(t)
+	cid, _ := uploadBigFileHelper(t, storage)
 
 	channelError := make(chan error, 1)
 	go func() {
-		err := codex.DownloadStream(ctx, cid, DownloadStreamOptions{Local: true})
+		err := storage.DownloadStream(ctx, cid, DownloadStreamOptions{Local: true})
 		channelError <- err
 	}()
 
@@ -120,15 +120,15 @@ func TestDownloadStreamCancelled(t *testing.T) {
 }
 
 func TestDownloadManual(t *testing.T) {
-	codex := newCodexNode(t)
-	cid, _ := uploadHelper(t, codex)
+	storage := newStorageNode(t)
+	cid, _ := uploadHelper(t, storage)
 
-	if err := codex.DownloadInit(cid, DownloadInitOptions{}); err != nil {
+	if err := storage.DownloadInit(cid, DownloadInitOptions{}); err != nil {
 		t.Fatal("Error when initializing download:", err)
 	}
 
 	var b strings.Builder
-	if chunk, err := codex.DownloadChunk(cid); err != nil {
+	if chunk, err := storage.DownloadChunk(cid); err != nil {
 		t.Fatal("Error when downloading chunk:", err)
 	} else {
 		b.Write(chunk)
@@ -139,16 +139,16 @@ func TestDownloadManual(t *testing.T) {
 		t.Fatalf("Expected data was \"Hello World!\" got %s", data)
 	}
 
-	if err := codex.DownloadCancel(cid); err != nil {
+	if err := storage.DownloadCancel(cid); err != nil {
 		t.Fatalf("Error when cancelling the download %s", err)
 	}
 }
 
 func TestDownloadManifest(t *testing.T) {
-	codex := newCodexNode(t)
-	cid, _ := uploadHelper(t, codex)
+	storage := newStorageNode(t)
+	cid, _ := uploadHelper(t, storage)
 
-	manifest, err := codex.DownloadManifest(cid)
+	manifest, err := storage.DownloadManifest(cid)
 	if err != nil {
 		t.Fatal("Error when downloading manifest:", err)
 	}
@@ -159,9 +159,9 @@ func TestDownloadManifest(t *testing.T) {
 }
 
 func TestDownloadManifestWithNotExistingCid(t *testing.T) {
-	codex := newCodexNode(t, Config{BlockRetries: 1})
+	storage := newStorageNode(t, Config{BlockRetries: 1})
 
-	manifest, err := codex.DownloadManifest("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
+	manifest, err := storage.DownloadManifest("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
 	if err == nil {
 		t.Fatal("Error when downloading manifest:", err)
 	}
@@ -172,9 +172,9 @@ func TestDownloadManifestWithNotExistingCid(t *testing.T) {
 }
 
 func TestDownloadInitWithNotExistingCid(t *testing.T) {
-	codex := newCodexNode(t, Config{BlockRetries: 1})
+	storage := newStorageNode(t, Config{BlockRetries: 1})
 
-	if err := codex.DownloadInit("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", DownloadInitOptions{}); err == nil {
+	if err := storage.DownloadInit("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", DownloadInitOptions{}); err == nil {
 		t.Fatal("expected error when initializing download for non-existent cid")
 	}
 }

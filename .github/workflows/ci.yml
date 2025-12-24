@@ -28,22 +28,22 @@ jobs:
           toolchain: 1.85.0
 
       - name: Record submodule commit
-        run: git -C vendor/nim-codex rev-parse HEAD > vendor/nim-codex/.codex-commit
+        run: git -C vendor/logos-storage-nim rev-parse HEAD > vendor/logos-storage-nim/.storage-commit
 
-      - name: Cache libcodex build
-        id: cache-libcodex
+      - name: Cache libstorage build
+        id: cache-libstorage
         uses: actions/cache@v4
         with:
-          path: vendor/nim-codex/build
-          key: ${{ runner.os }}-libcodex-${{ hashFiles('vendor/nim-codex/.codex-commit') }}
+          path: vendor/logos-storage-nim/build
+          key: ${{ runner.os }}-libstorage-${{ hashFiles('vendor/logos-storage-nim/.storage-commit') }}
 
-      - name: Build libcodex
-        if: steps.cache-libcodex.outputs.cache-hit != 'true'
+      - name: Build libstorage
+        if: steps.cache-libstorage.outputs.cache-hit != 'true'
         run: |
           make update
-          CODEX_LIB_PARAMS="-d:codex_enable_api_debug_peers=true -d:LeopardCmakeFlags=\"-DCMAKE_POSITION_INDEPENDENT_CODE=ON\"" make libcodex
+          STORAGE_LIB_PARAMS="-d:storage_enable_api_debug_peers=true -d:LeopardCmakeFlags=\"-DCMAKE_POSITION_INDEPENDENT_CODE=ON\"" make libstorage
 
-      - name: Build codex go
+      - name: Build Logos Storage go
         run: make
 
       - name: Install gotestsum

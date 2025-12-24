@@ -46,14 +46,14 @@ jobs:
           toolchain: 1.85.0
 
       - name: Record submodule commit
-        run: git -C vendor/nim-codex rev-parse HEAD > vendor/nim-codex/.codex-commit
+        run: git -C vendor/logos-storage-nim rev-parse HEAD > vendor/logos-storage-nim/.storage-commit
 
-      - name: Cache libcodex build
-        id: cache-libcodex
+      - name: Cache libstorage build
+        id: cache-libstorage
         uses: actions/cache@v4
         with:
-          path: vendor/nim-codex/build
-          key: ${{ runner.os }}-${{ matrix.target.cpu }}-libcodex-${{ hashFiles('vendor/nim-codex/.codex-commit') }}
+          path: vendor/logos-storage-nim/build
+          key: ${{ runner.os }}-${{ matrix.target.cpu }}-libstorage-${{ hashFiles('vendor/logos-storage-nim/.storage-commit') }}
 
       - name: MSYS2 (Windows amd64)
         if: matrix.target.os == 'windows-latest' && matrix.target.cpu == 'amd64'
@@ -69,49 +69,49 @@ jobs:
             mingw-w64-ucrt-x86_64-ntldd-git
             mingw-w64-ucrt-x86_64-rust
        
-      - name: Build libcodex (Linux)
-        if: matrix.target.lib_ext == 'so' && steps.cache-libcodex.outputs.cache-hit != 'true'
+      - name: Build libstorage (Linux)
+        if: matrix.target.lib_ext == 'so' && steps.cache-libstorage.outputs.cache-hit != 'true'
         run: |
           make update
-          make libcodex
+          make libstorage
 
-      - name: Build libcodex (MacOS)
-        if: matrix.target.os == 'macos-latest' && steps.cache-libcodex.outputs.cache-hit != 'true'
+      - name: Build libstorage (MacOS)
+        if: matrix.target.os == 'macos-latest' && steps.cache-libstorage.outputs.cache-hit != 'true'
         run: |
           make update
-          CODEX_LIB_PARAMS="--passL:\"-Wl,-install_name,@rpath/libcodex.dylib\"" make libcodex
+          STORAGE_LIB_PARAMS="--passL:\"-Wl,-install_name,@rpath/libstorage.dylib\"" make libstorage
 
-      - name: Build libcodex (Windows)
-        if: matrix.target.os == 'windows-latest' && steps.cache-libcodex.outputs.cache-hit != 'true'
+      - name: Build libstorage (Windows)
+        if: matrix.target.os == 'windows-latest' && steps.cache-libstorage.outputs.cache-hit != 'true'
         shell: msys2 {0}
         run: |
           pacman -Sy --noconfirm make
           git config --global core.symlinks false
           make update
-          make libcodex
+          make libstorage
 
       - name: Package artifacts Linux
         if: matrix.target.os == 'ubuntu-latest' || matrix.target.os == 'ubuntu-24.04-arm'
         run: |
           sudo apt-get update && sudo apt-get install -y zip
-          ZIPFILE=codex-linux-${{ matrix.target.cpu }}.zip
-          zip -j $ZIPFILE vendor/nim-codex/build/libcodex.${{ matrix.target.lib_ext }} vendor/nim-codex/library/libcodex.h
+          ZIPFILE=storage-linux-${{ matrix.target.cpu }}.zip
+          zip -j $ZIPFILE vendor/logos-storage-nim/build/libstorage.${{ matrix.target.lib_ext }} vendor/logos-storage-nim/library/libstorage.h
           echo "ZIPFILE=$ZIPFILE" >> $GITHUB_ENV
 
       - name: Package artifacts MacOS
         if: matrix.target.os == 'macos-latest'
         run: |
-          ZIPFILE=codex-macos-${{ matrix.target.cpu }}.zip
-          zip -j $ZIPFILE vendor/nim-codex/build/libcodex.${{ matrix.target.lib_ext }} vendor/nim-codex/library/libcodex.h
+          ZIPFILE=storage-macos-${{ matrix.target.cpu }}.zip
+          zip -j $ZIPFILE vendor/logos-storage-nim/build/libstorage.${{ matrix.target.lib_ext }} vendor/logos-storage-nim/library/libstorage.h
           echo "ZIPFILE=$ZIPFILE" >> $GITHUB_ENV
 
       - name: Package artifacts (Windows)
         if: matrix.target.os == 'windows-latest'
         shell: msys2 {0}
         run: |
-          ZIPFILE=codex-windows-${{ matrix.target.cpu }}.zip
-          (cd vendor/nim-codex/build && 7z a -tzip "${GITHUB_WORKSPACE}/${ZIPFILE}" libcodex.dll)
-          (cd vendor/nim-codex/library && 7z a -tzip "${GITHUB_WORKSPACE}/${ZIPFILE}" libcodex.h)
+          ZIPFILE=storage-windows-${{ matrix.target.cpu }}.zip
+          (cd vendor/logos-storage-nim/build && 7z a -tzip "${GITHUB_WORKSPACE}/${ZIPFILE}" libstorage.dll)
+          (cd vendor/logos-storage-nim/library && 7z a -tzip "${GITHUB_WORKSPACE}/${ZIPFILE}" libstorage.h)
           echo "ZIPFILE=$ZIPFILE" >> $GITHUB_ENV
 
       - name: Upload artifacts

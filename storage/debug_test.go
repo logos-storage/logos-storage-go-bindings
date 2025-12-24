@@ -1,4 +1,4 @@
-package codex
+package storage
 
 import (
 	"os"
@@ -8,9 +8,9 @@ import (
 )
 
 func TestDebug(t *testing.T) {
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 
-	info, err := codex.Debug()
+	info, err := storage.Debug()
 	if err != nil {
 		t.Fatalf("Debug call failed: %v", err)
 	}
@@ -26,13 +26,13 @@ func TestDebug(t *testing.T) {
 }
 
 func TestUpdateLogLevel(t *testing.T) {
-	tmpFile, err := os.CreateTemp("", "codex-log-*.log")
+	tmpFile, err := os.CreateTemp("", "storage-log-*.log")
 	if err != nil {
 		t.Fatalf("Failed to create temp log file: %v", err)
 	}
 	defer os.Remove(tmpFile.Name())
 
-	node := newCodexNode(t, Config{
+	node := newStorageNode(t, Config{
 		LogLevel:  "INFO",
 		LogFile:   tmpFile.Name(),
 		LogFormat: LogFormatNoColors,
@@ -53,7 +53,7 @@ func TestUpdateLogLevel(t *testing.T) {
 	}
 
 	if err := node.Stop(); err != nil {
-		t.Fatalf("Failed to stop Codex node: %v", err)
+		t.Fatalf("Failed to stop Logos Storage node: %v", err)
 	}
 
 	// Clear the file
@@ -63,7 +63,7 @@ func TestUpdateLogLevel(t *testing.T) {
 
 	err = node.Start()
 	if err != nil {
-		t.Fatalf("Failed to start Codex node: %v", err)
+		t.Fatalf("Failed to start Logos Storage node: %v", err)
 	}
 
 	content, err = os.ReadFile(tmpFile.Name())
@@ -76,11 +76,11 @@ func TestUpdateLogLevel(t *testing.T) {
 	}
 }
 
-func TestCodexPeerDebug(t *testing.T) {
-	var bootstrap, node1, node2 *CodexNode
+func TestStoragePeerDebug(t *testing.T) {
+	var bootstrap, node1, node2 *StorageNode
 	var err error
 
-	bootstrap = newCodexNode(t, Config{
+	bootstrap = newStorageNode(t, Config{
 		DiscoveryPort: 8092,
 	})
 
@@ -91,12 +91,12 @@ func TestCodexPeerDebug(t *testing.T) {
 
 	bootstrapNodes := []string{spr}
 
-	node1 = newCodexNode(t, Config{
+	node1 = newStorageNode(t, Config{
 		DiscoveryPort:  8090,
 		BootstrapNodes: bootstrapNodes,
 	})
 
-	node2 = newCodexNode(t, Config{
+	node2 = newStorageNode(t, Config{
 		DiscoveryPort:  8091,
 		BootstrapNodes: bootstrapNodes,
 	})
@@ -108,7 +108,7 @@ func TestCodexPeerDebug(t *testing.T) {
 
 	var record PeerRecord
 	for range 10 {
-		record, err = node1.CodexPeerDebug(peerId)
+		record, err = node1.StoragePeerDebug(peerId)
 		if err == nil {
 			break
 		}
@@ -117,22 +117,22 @@ func TestCodexPeerDebug(t *testing.T) {
 	}
 
 	if err != nil {
-		t.Fatalf("CodexPeerDebug call failed: %v", err)
+		t.Fatalf("Logos StoragePeerDebug call failed: %v", err)
 	}
 
 	if record.PeerId == "" {
-		t.Fatalf("CodexPeerDebug call failed: %v", err)
+		t.Fatalf("Logos StoragePeerDebug call failed: %v", err)
 	}
 	if record.PeerId == "" {
-		t.Error("CodexPeerDebug info PeerId is empty")
+		t.Error("Logos StoragePeerDebug info PeerId is empty")
 	}
 	if record.SeqNo == 0 {
-		t.Error("CodexPeerDebug info SeqNo is empty")
+		t.Error("Logos StoragePeerDebug info SeqNo is empty")
 	}
 	if len(record.Addresses) == 0 {
-		t.Error("CodexPeerDebug info Addresses is empty")
+		t.Error("Logos StoragePeerDebug info Addresses is empty")
 	}
 	if record.PeerId != peerId {
-		t.Errorf("CodexPeerDebug info PeerId (%s) does not match requested PeerId (%s)", record.PeerId, peerId)
+		t.Errorf("Logos StoragePeerDebug info PeerId (%s) does not match requested PeerId (%s)", record.PeerId, peerId)
 	}
 }

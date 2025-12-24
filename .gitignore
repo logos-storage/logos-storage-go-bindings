@@ -18,8 +18,8 @@
 nimcache
 
 # Test files
-codex/testdata/hello.downloaded.txt
-codex/testdata/hello.downloaded.writer.txt
+storage/testdata/hello.downloaded.txt
+storage/testdata/hello.downloaded.writer.txt
 
 # Bin
-codex-go
+storage-go

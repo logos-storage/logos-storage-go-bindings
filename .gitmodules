@@ -1,3 +1,3 @@
-[submodule "vendor/nim-codex"]
-	path = vendor/nim-codex
-	url = https://github.com/codex-storage/nim-codex.git
+[submodule "vendor/logos-storage-nim"]
+	path = vendor/logos-storage-nim
+	url = https://github.com/logos-storage/logos-storage-nim.git
