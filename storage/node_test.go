@@ -95,7 +95,7 @@ func TestStorageQuota(t *testing.T) {
 }
 
 func TestCreateAndDestroyMultipleInstancesWithSameDatadir(t *testing.T) {
-	t.Skip("Enable when the PR https://github.com/logos-storage/logos-storage-nim/pull/1346 is merged into master.")
+	t.Skip("Enable when the PR https://github.com/logos-storage/logos-storage-nim/pull/1364 is merged into master.")
 
 	datadir := fmt.Sprintf("%s/special-test", t.TempDir())
 
