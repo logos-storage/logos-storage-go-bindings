@@ -1,13 +1,13 @@
-# Makefile for Codex Go Bindings
+# Makefile for Logos Storage Go Bindings
 
-NIM_CODEX_DIR := vendor/nim-codex
-NIM_CODEX_LIB_DIR   := $(abspath $(NIM_CODEX_DIR)/library)
-NIM_CODEX_BUILD_DIR := $(abspath $(NIM_CODEX_DIR)/build)
+LOGOS_STORAGE_NIM_DIR := vendor/logos-storage-nim
+LOGOS_STORAGE_NIM_LIB_DIR   := $(abspath $(LOGOS_STORAGE_NIM_DIR)/library)
+LOGOS_STORAGE_NIM_BUILD_DIR := $(abspath $(LOGOS_STORAGE_NIM_DIR)/build)
 
-CGO_CFLAGS  := -I$(NIM_CODEX_LIB_DIR)
-CGO_LDFLAGS := -L$(NIM_CODEX_BUILD_DIR) -lcodex -Wl,-rpath,$(NIM_CODEX_BUILD_DIR)
+CGO_CFLAGS  := -I$(LOGOS_STORAGE_NIM_LIB_DIR)
+CGO_LDFLAGS := -L$(LOGOS_STORAGE_NIM_BUILD_DIR) -lstorage -Wl,-rpath,$(LOGOS_STORAGE_NIM_BUILD_DIR)
 
-.PHONY: all clean update libcodex build test
+.PHONY: all clean update libstorage build test
 
 all: build
 
@@ -16,20 +16,20 @@ submodules:
 	@git submodule update --init --recursive
 
 update: | submodules
-	@echo "Updating nim-codex..."
-	@$(MAKE) -C $(NIM_CODEX_DIR) update
+	@echo "Updating logos-storage-nim..."
+	@$(MAKE) -C $(LOGOS_STORAGE_NIM_DIR) update
 
-libcodex:
-	@echo "Building libcodex..."
-	@$(MAKE) -C $(NIM_CODEX_DIR) libcodex
+libstorage:
+	@echo "Building libstorage..."
+	@$(MAKE) -C $(LOGOS_STORAGE_NIM_DIR) libstorage
 
-libcodex-with-debug-api:
-	@echo "Building libcodex..."
-	@$(MAKE) -C $(NIM_CODEX_DIR) libcodex CODEX_LIB_PARAMS="-d:codex_enable_api_debug_peers"
+libstorage-with-debug-api:
+	@echo "Building libstorage..."
+	@$(MAKE) -C $(LOGOS_STORAGE_NIM_DIR) libstorage STORAGE_LIB_PARAMS="-d:storage_enable_api_debug_peers"
 
 build:
-	@echo "Building Codex Go Bindings..."
-	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go build -o codex-go ./codex
+	@echo "Building Logos Storage Go Bindings..."
+	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go build -o storage-go ./storage
 
 test:
 	@echo "Running tests..."
@@ -44,5 +44,5 @@ test-with-params:
 
 clean:
 	@echo "Cleaning up..."
-	@git submodule deinit -f $(NIM_CODEX_DIR)
-	@rm -f codex-go
+	@git submodule deinit -f $(LOGOS_STORAGE_NIM_DIR)
+	@rm -f storage-go

@@ -1,4 +1,4 @@
-package codex
+package storage
 
 import (
 	"bytes"
@@ -11,13 +11,13 @@ import (
 const expectedCID = "zDvZRwzmAkhzDRPH5EW242gJBNZ2T7aoH2v1fVH66FxXL4kSbvyM"
 
 func TestUploadReader(t *testing.T) {
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 	totalBytes := 0
 	finalPercent := 0.0
 
 	buf := bytes.NewBuffer([]byte("Hello World!"))
 	len := buf.Len()
-	cid, err := codex.UploadReader(context.Background(), UploadOptions{Filepath: "hello.txt", OnProgress: func(read, total int, percent float64, err error) {
+	cid, err := storage.UploadReader(context.Background(), UploadOptions{Filepath: "hello.txt", OnProgress: func(read, total int, percent float64, err error) {
 		if err != nil {
 			log.Fatalf("Error happened during upload: %v\n", err)
 		}
@@ -46,12 +46,12 @@ func TestUploadReader(t *testing.T) {
 func TestUploadReaderCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 	buf := bytes.NewBuffer(make([]byte, 1024*1024*10))
 
 	channelErr := make(chan error, 1)
 	go func() {
-		_, e := codex.UploadReader(ctx, UploadOptions{Filepath: "hello.txt"}, buf)
+		_, e := storage.UploadReader(ctx, UploadOptions{Filepath: "hello.txt"}, buf)
 		channelErr <- e
 	}()
 
@@ -68,7 +68,7 @@ func TestUploadReaderCancel(t *testing.T) {
 }
 
 func TestUploadFile(t *testing.T) {
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 	totalBytes := 0
 	finalPercent := 0.0
 
@@ -86,7 +86,7 @@ func TestUploadFile(t *testing.T) {
 		finalPercent = percent
 	}}
 
-	cid, err := codex.UploadFile(context.Background(), options)
+	cid, err := storage.UploadFile(context.Background(), options)
 	if err != nil {
 		t.Fatalf("UploadReader failed: %v", err)
 	}
@@ -119,11 +119,11 @@ func TestUploadFileCancel(t *testing.T) {
 	}
 	tmpFile.Close()
 
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 
 	channelError := make(chan error, 1)
 	go func() {
-		_, err := codex.UploadFile(ctx, UploadOptions{Filepath: tmpFile.Name()})
+		_, err := storage.UploadFile(ctx, UploadOptions{Filepath: tmpFile.Name()})
 		channelError <- err
 	}()
 
@@ -140,11 +140,11 @@ func TestUploadFileCancel(t *testing.T) {
 }
 
 func TestUploadFileNoProgress(t *testing.T) {
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 
 	options := UploadOptions{Filepath: "./testdata/doesnt_exist.txt"}
 
-	cid, err := codex.UploadFile(context.Background(), options)
+	cid, err := storage.UploadFile(context.Background(), options)
 	if err == nil {
 		t.Fatalf("UploadReader should have failed")
 	}
@@ -155,24 +155,24 @@ func TestUploadFileNoProgress(t *testing.T) {
 }
 
 func TestManualUpload(t *testing.T) {
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 
-	sessionId, err := codex.UploadInit(&UploadOptions{Filepath: "hello.txt"})
+	sessionId, err := storage.UploadInit(&UploadOptions{Filepath: "hello.txt"})
 	if err != nil {
 		log.Fatal("Error happened:", err.Error())
 	}
 
-	err = codex.UploadChunk(sessionId, []byte("Hello "))
+	err = storage.UploadChunk(sessionId, []byte("Hello "))
 	if err != nil {
 		log.Fatal("Error happened:", err.Error())
 	}
 
-	err = codex.UploadChunk(sessionId, []byte("World!"))
+	err = storage.UploadChunk(sessionId, []byte("World!"))
 	if err != nil {
 		log.Fatal("Error happened:", err.Error())
 	}
 
-	cid, err := codex.UploadFinalize(sessionId)
+	cid, err := storage.UploadFinalize(sessionId)
 	if err != nil {
 		log.Fatal("Error happened:", err.Error())
 	}

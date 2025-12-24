@@ -1,4 +1,4 @@
-package codex
+package storage
 
 import (
 	"log"
@@ -6,27 +6,27 @@ import (
 )
 
 func TestConnectWithAddress(t *testing.T) {
-	var node1, node2 *CodexNode
+	var node1, node2 *StorageNode
 	var err error
 
 	t.Cleanup(func() {
 		if node1 != nil {
 			if err := node1.Stop(); err != nil {
-				t.Logf("cleanup codex1: %v", err)
+				t.Logf("cleanup storage1: %v", err)
 			}
 
 			if err := node1.Destroy(); err != nil {
-				t.Logf("cleanup codex1: %v", err)
+				t.Logf("cleanup storage1: %v", err)
 			}
 		}
 
 		if node2 != nil {
 			if err := node2.Stop(); err != nil {
-				t.Logf("cleanup codex2: %v", err)
+				t.Logf("cleanup storage2: %v", err)
 			}
 
 			if err := node2.Destroy(); err != nil {
-				t.Logf("cleanup codex2: %v", err)
+				t.Logf("cleanup storage2: %v", err)
 			}
 		}
 	})
@@ -39,11 +39,11 @@ func TestConnectWithAddress(t *testing.T) {
 		Nat:            "none",
 	})
 	if err != nil {
-		t.Fatalf("Failed to create codex1: %v", err)
+		t.Fatalf("Failed to create Logos Storage node 1: %v", err)
 	}
 
 	if err := node1.Start(); err != nil {
-		t.Fatalf("Failed to start codex1: %v", err)
+		t.Fatalf("Failed to start Logos Storage node 1: %v", err)
 	}
 
 	node2, err = New(Config{
@@ -53,11 +53,11 @@ func TestConnectWithAddress(t *testing.T) {
 		DiscoveryPort:  8091,
 	})
 	if err != nil {
-		t.Fatalf("Failed to create codex2: %v", err)
+		t.Fatalf("Failed to create Logos Storage node 2: %v", err)
 	}
 
 	if err := node2.Start(); err != nil {
-		t.Fatalf("Failed to start codex2: %v", err)
+		t.Fatalf("Failed to start Logos Storage node 2: %v", err)
 	}
 
 	info2, err := node2.Debug()
@@ -70,11 +70,11 @@ func TestConnectWithAddress(t *testing.T) {
 	}
 }
 
-func TestCodexWithPeerId(t *testing.T) {
-	var bootstrap, node1, node2 *CodexNode
+func TestStorageWithPeerId(t *testing.T) {
+	var bootstrap, node1, node2 *StorageNode
 	var err error
 
-	bootstrap = newCodexNode(t, Config{
+	bootstrap = newStorageNode(t, Config{
 		DiscoveryPort: 8092,
 	})
 
@@ -85,12 +85,12 @@ func TestCodexWithPeerId(t *testing.T) {
 
 	bootstrapNodes := []string{spr}
 
-	node1 = newCodexNode(t, Config{
+	node1 = newStorageNode(t, Config{
 		DiscoveryPort:  8090,
 		BootstrapNodes: bootstrapNodes,
 	})
 
-	node2 = newCodexNode(t, Config{
+	node2 = newStorageNode(t, Config{
 		DiscoveryPort:  8091,
 		BootstrapNodes: bootstrapNodes,
 	})

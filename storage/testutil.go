@@ -1,4 +1,4 @@
-package codex
+package storage
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ func defaultConfigHelper(t *testing.T) Config {
 	}
 }
 
-func newCodexNode(t *testing.T, opts ...Config) *CodexNode {
+func newStorageNode(t *testing.T, opts ...Config) *StorageNode {
 	config := defaultConfigHelper(t)
 
 	if len(opts) > 0 {
@@ -63,33 +63,33 @@ func newCodexNode(t *testing.T, opts ...Config) *CodexNode {
 
 	node, err := New(config)
 	if err != nil {
-		t.Fatalf("Failed to create Codex node: %v", err)
+		t.Fatalf("Failed to create Logos Storage node: %v", err)
 	}
 
 	err = node.Start()
 	if err != nil {
-		t.Fatalf("Failed to start Codex node: %v", err)
+		t.Fatalf("Failed to start Logos Storage node: %v", err)
 	}
 
 	t.Cleanup(func() {
 		if err := node.Stop(); err != nil {
-			t.Logf("cleanup codex: %v", err)
+			t.Logf("cleanup storage: %v", err)
 		}
 
 		if err := node.Destroy(); err != nil {
-			t.Logf("cleanup codex: %v", err)
+			t.Logf("cleanup storage: %v", err)
 		}
 	})
 
 	return node
 }
 
-func uploadHelper(t *testing.T, codex *CodexNode) (string, int) {
+func uploadHelper(t *testing.T, storage *StorageNode) (string, int) {
 	t.Helper()
 
 	buf := bytes.NewBuffer([]byte("Hello World!"))
 	len := buf.Len()
-	cid, err := codex.UploadReader(context.Background(), UploadOptions{Filepath: "hello.txt"}, buf)
+	cid, err := storage.UploadReader(context.Background(), UploadOptions{Filepath: "hello.txt"}, buf)
 	if err != nil {
 		t.Fatalf("Error happened during upload: %v\n", err)
 	}
@@ -97,13 +97,13 @@ func uploadHelper(t *testing.T, codex *CodexNode) (string, int) {
 	return cid, len
 }
 
-func uploadBigFileHelper(t *testing.T, codex *CodexNode) (string, int) {
+func uploadBigFileHelper(t *testing.T, storage *StorageNode) (string, int) {
 	t.Helper()
 
 	len := 1024 * 1024 * 50
 	buf := bytes.NewBuffer(make([]byte, len))
 
-	cid, err := codex.UploadReader(context.Background(), UploadOptions{Filepath: "hello.txt"}, buf)
+	cid, err := storage.UploadReader(context.Background(), UploadOptions{Filepath: "hello.txt"}, buf)
 	if err != nil {
 		t.Fatalf("Error happened during upload: %v\n", err)
 	}
