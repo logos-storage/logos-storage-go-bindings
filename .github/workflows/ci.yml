@@ -41,7 +41,7 @@ jobs:
         if: steps.cache-libstorage.outputs.cache-hit != 'true'
         run: |
           make update
-          STORAGE_LIB_PARAMS="-d:storage_enable_api_debug_peers=true -d:LeopardCmakeFlags=\"-DCMAKE_POSITION_INDEPENDENT_CODE=ON\"" make libstorage
+          STORAGE_LIB_PARAMS="-d:storage_enable_api_debug_peers=true" make libstorage
 
       - name: Build Logos Storage go
         run: make
