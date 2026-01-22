@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const expectedCID = "zDvZRwzmAkhzDRPH5EW242gJBNZ2T7aoH2v1fVH66FxXL4kSbvyM"
+const expectedCID = "zDvZRwzm93r6pbHvCDtfXiLiLF96cXTiX5rkv1fWMLGfV1NJX8cr"
 
 func TestUploadReader(t *testing.T) {
 	storage := newStorageNode(t)
