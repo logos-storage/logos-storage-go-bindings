@@ -29,6 +29,12 @@ jobs:
             lib_ext: dll
 
     steps:
+      - name: Enable long paths (Windows)
+        if: matrix.target.os == 'windows-latest'
+        shell: msys2 {0}
+        run: |
+          git config --global core.longpaths true
+
       - name: Check out sources
         uses: actions/checkout@v4
         with:
