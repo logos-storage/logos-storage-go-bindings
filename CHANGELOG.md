@@ -1,3 +1,8 @@
+## v0.0.28 (2026-01-23)
+### Notes
+
+- chore: rename `Codex` to `Storage`
+
 ## v0.0.28 (2025-11-14)
 ### Notes
 
