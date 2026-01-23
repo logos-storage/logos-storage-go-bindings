@@ -1,11 +1,11 @@
-package codex
+package storage
 
 /*
    #include "bridge.h"
    #include <stdlib.h>
 
-   static int cGoCodexConnect(void* codexCtx, char* peerId, const char** peerAddresses, uintptr_t peerAddressesSize,  void* resp) {
-       return codex_connect(codexCtx, peerId, peerAddresses, peerAddressesSize, (CodexCallback) callback, resp);
+   static int cGoStorageConnect(void* storageCtx, char* peerId, const char** peerAddresses, uintptr_t peerAddressesSize,  void* resp) {
+       return storage_connect(storageCtx, peerId, peerAddresses, peerAddressesSize, (StorageCallback) callback, resp);
    }
 */
 import "C"
@@ -18,8 +18,8 @@ import (
 // otherwise the `peerId` is used to invoke peer discovery, if it succeeds
 // the returned addresses will be used to dial.
 // `peerAddresses` the listening addresses of the peers to dial,
-// eg the one specified with `ListenAddresses` in `CodexConfig`.
-func (node CodexNode) Connect(peerId string, peerAddresses []string) error {
+// eg the one specified with `ListenAddresses` in `StorageConfig`.
+func (node StorageNode) Connect(peerId string, peerAddresses []string) error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
@@ -33,12 +33,12 @@ func (node CodexNode) Connect(peerId string, peerAddresses []string) error {
 			defer C.free(unsafe.Pointer(cAddresses[i]))
 		}
 
-		if C.cGoCodexConnect(node.ctx, cPeerId, &cAddresses[0], C.uintptr_t(len(peerAddresses)), bridge.resp) != C.RET_OK {
-			return bridge.callError("cGoCodexConnect")
+		if C.cGoStorageConnect(node.ctx, cPeerId, &cAddresses[0], C.uintptr_t(len(peerAddresses)), bridge.resp) != C.RET_OK {
+			return bridge.callError("cGoStorageConnect")
 		}
 	} else {
-		if C.cGoCodexConnect(node.ctx, cPeerId, nil, 0, bridge.resp) != C.RET_OK {
-			return bridge.callError("cGoCodexConnect")
+		if C.cGoStorageConnect(node.ctx, cPeerId, nil, 0, bridge.resp) != C.RET_OK {
+			return bridge.callError("cGoStorageConnect")
 		}
 	}
 

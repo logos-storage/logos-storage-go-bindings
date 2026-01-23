@@ -1,13 +1,13 @@
-# Codex Go Bindings
+# Logos Storage Go Bindings
 
-This repository provides Go bindings for the Codex library, enabling seamless integration with Go projects.
+This repository provides Go bindings for the Logos Stroage library, enabling seamless integration with Go projects.
 
 ## Usage
 
 Include in your Go project:
 
 ```sh
-go get github.com/codex-storage/codex-go-bindings
+go get github.com/logos-storage/logos-storage-go-bindings
 ```
 
 Then the easiest way is to download our prebuilt artifacts and configure your project.
@@ -17,13 +17,13 @@ You can use this `Makefile` (or integrates the commands in your build process):
 # Path configuration
 LIBS_DIR := $(abspath ./libs)
 CGO_CFLAGS  := -I$(LIBS_DIR)
-CGO_LDFLAGS := -L$(LIBS_DIR) -lcodex -Wl,-rpath,$(LIBS_DIR)
+CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 
 # Fetch configuration
 OS ?= "linux"
 ARCH ?= "amd64"
 VERSION ?= "v0.0.21"
-DOWNLOAD_URL := "https://github.com/codex-storage/codex-go-bindings/releases/download/$(VERSION)/codex-${OS}-${ARCH}.zip"
+DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-go-bindings/releases/download/$(VERSION)/storage-${OS}-${ARCH}.zip"
 
 # Edit your binary name here
 ifeq ($(OS),Windows_NT)
@@ -33,9 +33,9 @@ else
 endif
 
 fetch:
-	@echo "Fetching libcodex from GitHub Actions from: ${DOWNLOAD_URL}"
-	@curl -fSL --create-dirs -o $(LIBS_DIR)/codex-${OS}-${ARCH}.zip ${DOWNLOAD_URL}
-	@unzip -o -qq $(LIBS_DIR)/codex-${OS}-${ARCH}.zip -d $(LIBS_DIR)
+	@echo "Fetching libstorage from GitHub Actions from: ${DOWNLOAD_URL}"
+	@curl -fSL --create-dirs -o $(LIBS_DIR)/storage-${OS}-${ARCH}.zip ${DOWNLOAD_URL}
+	@unzip -o -qq $(LIBS_DIR)/storage-${OS}-${ARCH}.zip -d $(LIBS_DIR)
 	@rm -f $(LIBS_DIR)/*.zip
 
 build:
@@ -60,7 +60,7 @@ make build
 
 That's it!
 
-For an example on how to use this package, please take a look at our [example-go-bindings](https://github.com/codex-storage/example-codex-go-bindings) repo.
+For an example on how to use this package, please take a look at our [example-go-bindings](https://github.com/logos-storage/example-logos-storage-go-bindings) repo.
 
 If you want to build the library yourself, you need to clone this repo and follow the instructions
 of the next step.
@@ -69,13 +69,13 @@ of the next step.
 
 To build the required dependencies for this module, the `make` command needs to be executed.
 If you are integrating this module into another project via `go get`, ensure that you navigate
-to the `codex-go-bindings` module directory and run the `make` commands.
+to the `logos-storage-go-bindings` module directory and run the `make` commands.
 
 ### Steps to install
 
 Follow these steps to install and set up the module:
 
-1. Make sure your system has the [prerequisites](https://github.com/codex-storage/nim-codex) to run a local Codex node.
+1. Make sure your system has the [prerequisites](https://github.com/logos-storage/logos-storage-nim) to run a local Logos Storage node.
 
 2. Fetch the dependencies:
    ```sh
@@ -84,20 +84,20 @@ Follow these steps to install and set up the module:
 
 3. Build the library:
    ```sh
-   make libcodex
+   make libstorage
    ```
 
-You can pass flags to the Codex building step by using `CODEX_LIB_PARAMS`. For example,
+You can pass flags to the Logos Storage building step by using `STORAGE_LIB_PARAMS`. For example,
 if you want to enable debug API for peers, you can build the library using:
 
 ```sh
-CODEX_LIB_PARAMS="-d:codex_enable_api_debug_peers=true" make libcodex
+STORAGE_LIB_PARAMS="-d:storage_enable_api_debug_peers=true" make libstorage
 ```
 
-or you can use a convenience `libcodex-with-debug-api` make target:
+or you can use a convenience `libstorage-with-debug-api` make target:
 
 ```sh
-make libcodex-with-debug-api
+make libstorage-with-debug-api
 ```
 
 To run the test, you have to make sure you have `gotestsum` installed on your system, e.g.:
@@ -143,11 +143,11 @@ The release process is defined [here](./RELEASE.md).
 
 ### Init
 
-First you need to create a Codex node:
+First you need to create a Logos Storage node:
 
 ```go
 dataDir := "..."
-node, err := CodexNew(CodexConfig{
+node, err := StorageNew(StorageConfig{
    DataDir:        dataDir,
    BlockRetries:   10,
 })
@@ -155,7 +155,7 @@ node, err := CodexNew(CodexConfig{
 err := node.Destroy()
 ```
 
-The `CodexConfig` object provides several options to configure your node. You should at least
+The `StorageConfig` object provides several options to configure your node. You should at least
 adjust the `DataDir` folder and the `BlockRetries` setting to avoid long retrieval times when
 the data is unavailable.
 
@@ -198,7 +198,7 @@ There are 3 strategies for uploading: `reader`, `file` or `chunks`. Each one req
 The `reader` strategy is the easiest option when you already have a Go `Reader`.
 It handles creating the upload session and cancels it if an error occurs.
 
-The `filepath` should contain the data’s name with its extension, because Codex uses that to
+The `filepath` should contain the data’s name with its extension, because Logos Storage uses that to
 infer the MIME type.
 
 An `onProgress` callback is available to receive progress updates and notify the user.
@@ -213,12 +213,12 @@ onProgress := func(read, total int, percent float64, err error) {
    // Do something with the data
 }
 ctx := context.Background()
-cid, err := codex.UploadReader(ctx, UploadOptions{filepath: "hello.txt", onProgress: onProgress}, buf)
+cid, err := storage.UploadReader(ctx, UploadOptions{filepath: "hello.txt", onProgress: onProgress}, buf)
 ```
 
 #### file
 
-The `file` strategy allows you to upload a file on Codex using the path.
+The `file` strategy allows you to upload a file on Logos Storage using the path.
 It handles creating the upload session and cancels it if an error occurs.
 
 The `onProgress` callback is the same as for `reader` strategy.
@@ -230,7 +230,7 @@ onProgress := func(read, total int, percent float64, err error) {
    // Do something with the data
 }
 ctx := context.Background()
-cid, err := codex.UploadFile(ctx, UploadOptions{filepath: "./testdata/hello.txt", onProgress: onProgress})
+cid, err := storage.UploadFile(ctx, UploadOptions{filepath: "./testdata/hello.txt", onProgress: onProgress})
 ```
 
 #### chunks
@@ -240,13 +240,13 @@ but provides more flexibility. You have to create the upload session, send the c
 and then finalize to get the cid.
 
 ```go
-sessionId, err := codex.UploadInit(&UploadOptions{filepath: "hello.txt"})
+sessionId, err := storage.UploadInit(&UploadOptions{filepath: "hello.txt"})
 
-err = codex.UploadChunk(sessionId, []byte("Hello "))
+err = storage.UploadChunk(sessionId, []byte("Hello "))
 
-err = codex.UploadChunk(sessionId, []byte("World!"))
+err = storage.UploadChunk(sessionId, []byte("World!"))
 
-cid, err := codex.UploadFinalize(sessionId)
+cid, err := storage.UploadFinalize(sessionId)
 ```
 
 Using this strategy, you can handle resumable uploads and cancel the upload
@@ -257,7 +257,7 @@ whenever you want!
 When you receive a cid, you can download the `Manifest` to get information about the data:
 
 ```go
-manifest, err := codex.DownloadManifest(cid)
+manifest, err := storage.DownloadManifest(cid)
 ```
 
 It is not mandatory for downloading the data but it is really useful.
@@ -286,7 +286,7 @@ opt := DownloadStreamOptions{
    },
 }
 ctx := context.Background()
-err := codex.DownloadStream(ctx, cid, opt)
+err := storage.DownloadStream(ctx, cid, opt)
 ```
 
 #### chunks
@@ -300,9 +300,9 @@ to terminate the download session.
 
 ```go
 cid := "..."
-err := codex.DownloadInit(cid, DownloadInitOptions{})
-chunk, err := codex.DownloadChunk(cid)
-err := codex.DownloadCancel(cid)
+err := storage.DownloadInit(cid, DownloadInitOptions{})
+chunk, err := storage.DownloadChunk(cid)
+err := storage.DownloadCancel(cid)
 ```
 
 Using this strategy, you can handle resumable downloads and cancel the download
@@ -345,10 +345,10 @@ info, err := node.Debug()
 err := node.UpdateLogLevel("DEBUG")
 
 peerId := "..."
-record, err := node.CodexPeerDebug(peerId)
+record, err := node.StoragePeerDebug(peerId)
 ```
 
-`CodexPeerDebug` is only available if you built with `-d:codex_enable_api_debug_peers=true` flag.
+`StoragePeerDebug` is only available if you built with `-d:STORAGE_enable_api_debug_peers=true` flag.
 
 ### Context and cancellation
 

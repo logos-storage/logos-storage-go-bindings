@@ -1,19 +1,19 @@
-package codex
+package storage
 
 /*
    #include "bridge.h"
    #include <stdlib.h>
 
-   static int cGoCodexDebug(void* codexCtx, void* resp) {
-       return codex_debug(codexCtx, (CodexCallback) callback, resp);
+   static int cGoStorageDebug(void* storageCtx, void* resp) {
+       return storage_debug(storageCtx, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexLogLevel(void* codexCtx, char* logLevel, void* resp) {
-       return codex_log_level(codexCtx, logLevel, (CodexCallback) callback, resp);
+   static int cGoStorageLogLevel(void* storageCtx, char* logLevel, void* resp) {
+       return storage_log_level(storageCtx, logLevel, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexPeerDebug(void* codexCtx, char* peerId, void* resp) {
-       return codex_peer_debug(codexCtx, peerId, (CodexCallback) callback, resp);
+   static int cGoStoragePeerDebug(void* storageCtx, char* peerId, void* resp) {
+       return storage_peer_debug(storageCtx, peerId, (StorageCallback) callback, resp);
    }
 */
 import "C"
@@ -40,7 +40,7 @@ type DebugInfo struct {
 	ID string `json:"id"`
 
 	// Peer info addresses
-	// Specified with `ListenAddresses` in `CodexConfig`
+	// Specified with `ListenAddresses` in `StorageConfig`
 	Addrs []string `json:"addrs"`
 
 	Spr               string       `json:"spr"`
@@ -54,15 +54,15 @@ type PeerRecord struct {
 	Addresses []string `json:"addresses,omitempty"`
 }
 
-// Debug retrieves debugging information from the Codex node.
-func (node CodexNode) Debug() (DebugInfo, error) {
+// Debug retrieves debugging information from the Logos Storage node.
+func (node StorageNode) Debug() (DebugInfo, error) {
 	var info DebugInfo
 
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexDebug(node.ctx, bridge.resp) != C.RET_OK {
-		return info, bridge.callError("cGoCodexDebug")
+	if C.cGoStorageDebug(node.ctx, bridge.resp) != C.RET_OK {
+		return info, bridge.callError("cGoStorageDebug")
 	}
 
 	value, err := bridge.wait()
@@ -78,27 +78,27 @@ func (node CodexNode) Debug() (DebugInfo, error) {
 // You can pass a plain level: TRACE, DEBUG, INFO, NOTICE, WARN, ERROR, FATAL.
 // The default level is TRACE.
 // You can also use Chronicles topic directives. So for example if you want
-// to update the general level to INFO but want to see TRACE logs for the codexlib
-// topic, you can pass "INFO,codexlib:TRACE".
-func (node CodexNode) UpdateLogLevel(logLevel string) error {
+// to update the general level to INFO but want to see TRACE logs for the libstorage
+// topic, you can pass "INFO,libstorage:TRACE".
+func (node StorageNode) UpdateLogLevel(logLevel string) error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
 	var cLogLevel = C.CString(string(logLevel))
 	defer C.free(unsafe.Pointer(cLogLevel))
 
-	if C.cGoCodexLogLevel(node.ctx, cLogLevel, bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexLogLevel")
+	if C.cGoStorageLogLevel(node.ctx, cLogLevel, bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageLogLevel")
 	}
 
 	_, err := bridge.wait()
 	return err
 }
 
-// CodexPeerDebug retrieves the peer record for a given peer ID.
+// StoragePeerDebug retrieves the peer record for a given peer ID.
 // This function is available only if the flag
-// -d:codex_enable_api_debug_peers=true was set at build time.
-func (node CodexNode) CodexPeerDebug(peerId string) (PeerRecord, error) {
+// -d:storage_enable_api_debug_peers=true was set at build time.
+func (node StorageNode) StoragePeerDebug(peerId string) (PeerRecord, error) {
 	var record PeerRecord
 
 	bridge := newBridgeCtx()
@@ -107,8 +107,8 @@ func (node CodexNode) CodexPeerDebug(peerId string) (PeerRecord, error) {
 	var cPeerId = C.CString(peerId)
 	defer C.free(unsafe.Pointer(cPeerId))
 
-	if C.cGoCodexPeerDebug(node.ctx, cPeerId, bridge.resp) != C.RET_OK {
-		return record, bridge.callError("cGoCodexPeerDebug")
+	if C.cGoStoragePeerDebug(node.ctx, cPeerId, bridge.resp) != C.RET_OK {
+		return record, bridge.callError("cGoStoragePeerDebug")
 	}
 
 	value, err := bridge.wait()

@@ -1,4 +1,4 @@
-package codex
+package storage
 
 import (
 	"encoding/json"
@@ -9,24 +9,24 @@ import (
    #include "bridge.h"
    #include <stdlib.h>
 
-   static int cGoCodexStorageList(void* codexCtx, void* resp) {
-       return codex_storage_list(codexCtx, (CodexCallback) callback, resp);
+   static int cGoStorageStorageList(void* storageCtx, void* resp) {
+       return storage_list(storageCtx, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexStorageFetch(void* codexCtx, char* cid, void* resp) {
-       return codex_storage_fetch(codexCtx, cid, (CodexCallback) callback, resp);
+   static int cGoStorageStorageFetch(void* storageCtx, char* cid, void* resp) {
+       return storage_fetch(storageCtx, cid, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexStorageSpace(void* codexCtx, void* resp) {
-       return codex_storage_space(codexCtx, (CodexCallback) callback, resp);
+   static int cGoStorageStorageSpace(void* storageCtx, void* resp) {
+       return storage_space(storageCtx, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexStorageDelete(void* codexCtx, char* cid, void* resp) {
-       return codex_storage_delete(codexCtx, cid, (CodexCallback) callback, resp);
+   static int cGoStorageStorageDelete(void* storageCtx, char* cid, void* resp) {
+       return storage_delete(storageCtx, cid, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexStorageExists(void* codexCtx, char* cid, void* resp) {
-       return codex_storage_exists(codexCtx, cid, (CodexCallback) callback, resp);
+   static int cGoStorageStorageExists(void* storageCtx, char* cid, void* resp) {
+       return storage_exists(storageCtx, cid, (StorageCallback) callback, resp);
    }
 */
 import "C"
@@ -41,27 +41,27 @@ type Space struct {
 	TotalBlocks int `json:"totalBlocks"`
 
 	// QuotaMaxBytes is the maximum storage space (in bytes) available
-	// for the node in Codex's local repository.
+	// for the node in Logos Storage's local repository.
 	QuotaMaxBytes int64 `json:"quotaMaxBytes"`
 
 	// QuotaUsedBytes is the mount of storage space (in bytes) currently used
-	// for storing files in Codex's local repository.
+	// for storing files in Logos Storage's local repository.
 	QuotaUsedBytes int64 `json:"quotaUsedBytes"`
 
 	// QuotaReservedBytes is the amount of storage reserved (in bytes) in the
-	// Codex's local repository for future use when storage requests will be picked
+	// Logos Storage's local repository for future use when storage requests will be picked
 	// up and hosted by the node using node's availabilities.
 	// This does not include the storage currently in use.
 	QuotaReservedBytes int64 `json:"quotaReservedBytes"`
 }
 
-// Manifests returns the list of all manifests stored by the Codex node.
-func (node CodexNode) Manifests() ([]Manifest, error) {
+// Manifests returns the list of all manifests stored by the Logos Storage node.
+func (node StorageNode) Manifests() ([]Manifest, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexStorageList(node.ctx, bridge.resp) != C.RET_OK {
-		return nil, bridge.callError("cGoCodexStorageList")
+	if C.cGoStorageStorageList(node.ctx, bridge.resp) != C.RET_OK {
+		return nil, bridge.callError("cGoStorageStorageList")
 	}
 	value, err := bridge.wait()
 	if err != nil {
@@ -84,15 +84,15 @@ func (node CodexNode) Manifests() ([]Manifest, error) {
 }
 
 // Fetch download a file from the network and store it to the local node.
-func (node CodexNode) Fetch(cid string) (Manifest, error) {
+func (node StorageNode) Fetch(cid string) (Manifest, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
 
-	if C.cGoCodexStorageFetch(node.ctx, cCid, bridge.resp) != C.RET_OK {
-		return Manifest{}, bridge.callError("cGoCodexStorageFetch")
+	if C.cGoStorageStorageFetch(node.ctx, cCid, bridge.resp) != C.RET_OK {
+		return Manifest{}, bridge.callError("cGoStorageStorageFetch")
 	}
 
 	value, err := bridge.wait()
@@ -111,14 +111,14 @@ func (node CodexNode) Fetch(cid string) (Manifest, error) {
 }
 
 // Space returns information about the storage space used and available.
-func (node CodexNode) Space() (Space, error) {
+func (node StorageNode) Space() (Space, error) {
 	var space Space
 
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexStorageSpace(node.ctx, bridge.resp) != C.RET_OK {
-		return space, bridge.callError("cGoCodexStorageSpace")
+	if C.cGoStorageStorageSpace(node.ctx, bridge.resp) != C.RET_OK {
+		return space, bridge.callError("cGoStorageStorageSpace")
 	}
 
 	value, err := bridge.wait()
@@ -132,15 +132,15 @@ func (node CodexNode) Space() (Space, error) {
 
 // Deletes either a single block or an entire dataset
 // from the local node. Does nothing if the dataset is not locally available.
-func (node CodexNode) Delete(cid string) error {
+func (node StorageNode) Delete(cid string) error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
 
-	if C.cGoCodexStorageDelete(node.ctx, cCid, bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexStorageDelete")
+	if C.cGoStorageStorageDelete(node.ctx, cCid, bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageStorageDelete")
 	}
 
 	_, err := bridge.wait()
@@ -148,15 +148,15 @@ func (node CodexNode) Delete(cid string) error {
 }
 
 // Exists checks if a given cid exists in the local storage.
-func (node CodexNode) Exists(cid string) (bool, error) {
+func (node StorageNode) Exists(cid string) (bool, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
 
-	if C.cGoCodexStorageExists(node.ctx, cCid, bridge.resp) != C.RET_OK {
-		return false, bridge.callError("cGoCodexStorageExists")
+	if C.cGoStorageStorageExists(node.ctx, cCid, bridge.resp) != C.RET_OK {
+		return false, bridge.callError("cGoStorageStorageExists")
 	}
 
 	result, err := bridge.wait()

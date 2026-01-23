@@ -23,7 +23,7 @@ git push --tags
 
 Once published, the artifacts can be downloaded using  the `version`, example: 
 
-`https://github.com/codex-storage/codex-go-bindings/releases/download/v0.0.16/codex-linux-amd64.zip`
+`https://github.com/logos-storage/logos-storage-go-bindings/releases/download/v0.0.16/storage-linux-amd64.zip`
 
 It is not recommended to use the `latest` URL because you may face cache issues.
 
@@ -32,33 +32,33 @@ It is not recommended to use the `latest` URL because you may face cache issues.
 Once released, you can integrate it into your Go project using:
 
 ```bash
-go get github.com/codex-storage/codex-go-bindings@v0.0.26
+go get github.com/logos-storage/logos-storage-go-bindings@v0.0.26
 ```
 
 Then you can use the following `Makefile` command to fetch the artifact:
 
 ```bash
 LIBS_DIR := $(abspath ./libs)
-CODEX_OS := linux
-CODEX_ARCH := amd64
-CODEX_VERSION := $(shell go list -m -f '{{.Version}}' github.com/codex-storage/codex-go-bindings 2>/dev/null)
-CODEX_DOWNLOAD_URL := "https://github.com/codex-storage/codex-go-bindings/releases/download/$(CODEX_VERSION)/codex-${CODEX_OS}-${CODEX_ARCH}.zip"
+STORAGE_OS := linux
+STORAGE_ARCH := amd64
+STORAGE_VERSION := $(shell go list -m -f '{{.Version}}' github.com/logos-storage/logos-storage-go-bindings 2>/dev/null)
+STORAGE_DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-go-bindings/releases/download/$(STORAGE_VERSION)/storage-${STORAGE_OS}-${STORAGE_ARCH}.zip"
 
-fetch-libcodex:
+fetch-libstorage:
     mkdir -p $(LIBS_DIR); \
-    curl -fSL --create-dirs -o $(LIBS_DIR)/codex-${CODEX_OS}-${CODEX_ARCH}.zip ${CODEX_DOWNLOAD_URL}; \
-    unzip -o -qq $(LIBS_DIR)/codex-${CODEX_OS}-${CODEX_ARCH}.zip -d $(LIBS_DIR); \
-    rm -f $(LIBS_DIR)/codex*.zip;
+    curl -fSL --create-dirs -o $(LIBS_DIR)/storage-${STORAGE_OS}-${STORAGE_ARCH}.zip ${STORAGE_DOWNLOAD_URL}; \
+    unzip -o -qq $(LIBS_DIR)/storage-${STORAGE_OS}-${STORAGE_ARCH}.zip -d $(LIBS_DIR); \
+    rm -f $(LIBS_DIR)/storage*.zip;
 ```
 
-`CODEX_VERSION` uses the same version as the Codex Go dependency declared in your project.
+`STORAGE_VERSION` uses the same version as the Logos Storage Go dependency declared in your project.
 
 ### Nix
 
 If you use Nix in a sandboxed environment, you cannot use curl to download the artifacts, so you have to prefetch them using the artifacts `SHA-256` hash. To generate the hash, you can use the following command: 
 
 ```bash
-nix store prefetch-file --json --unpack https://github.com/codex-storage/codex-go-bindings/releases/download/v0.0.26/codex-macos-arm64.zip | jq -r .hash
+nix store prefetch-file --json --unpack https://github.com/logos-storage/logos-storage-go-bindings/releases/download/v0.0.26/storage-macos-arm64.zip | jq -r .hash
 
 # [10.4 MiB DL] sha256-3CHIWoSjo0plsYqzXQWm1EtY1STcljV4yfXTPon90uE=
 ```
@@ -68,7 +68,7 @@ Then include this hash in your Nix configuration. For example:
 ```nix
 let
   optionalString = pkgs.lib.optionalString;
-  codexVersion = "v0.0.26";
+  storageVersion = "v0.0.26";
   arch =
     if stdenv.hostPlatform.isx86_64 then "amd64"
     else if stdenv.hostPlatform.isAarch64 then "arm64"
@@ -76,21 +76,21 @@ let
   os = if stdenv.isDarwin then "macos" else "Linux";
   hash =
     if stdenv.hostPlatform.isDarwin
-    # nix store prefetch-file --json --unpack https://github.com/codex-storage/codex-go-bindings/releases/download/v0.0.26/codex-macos-arm64.zip | jq -r .hash
+    # nix store prefetch-file --json --unpack https://github.com/logos-storage/logos-storage-go-bindings/releases/download/v0.0.26/storage-macos-arm64.zip | jq -r .hash
     then "sha256-3CHIWoSjo0plsYqzXQWm1EtY1STcljV4yfXTPon90uE="
-    # nix store prefetch-file --json --unpack https://github.com/codex-storage/codex-go-bindings/releases/download/v0.0.26/codex-Linux-amd64.zip | jq -r .hash
+    # nix store prefetch-file --json --unpack https://github.com/logos-storage/logos-storage-go-bindings/releases/download/v0.0.26/storage-Linux-amd64.zip | jq -r .hash
     else "sha256-YxW2vFZlcLrOx1PYgWW4MIstH/oFBRF0ooS0sl3v6ig=";
 
-  # Pre-fetch libcodex to avoid network during build
-  codexLib = pkgs.fetchzip {
-    url = "https://github.com/codex-storage/codex-go-bindings/releases/download/${codexVersion}/codex-${os}-${arch}.zip";
+  # Pre-fetch libstorage to avoid network during build
+  storageLib = pkgs.fetchzip {
+    url = "https://github.com/logos-storage/logos-storage-go-bindings/releases/download/${storageVersion}/storage-${os}-${arch}.zip";
     hash = hash;
     stripRoot = false;
   };
 
   preBuild = ''
-    export LIBS_DIR="${codexLib}"
-    # Build something cool with Codex
+    export LIBS_DIR="${storageLib}"
+    # Build something cool with Logos Storage
   '';
 ```
 

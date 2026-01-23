@@ -1,27 +1,27 @@
-package codex
+package storage
 
 /*
    #include "bridge.h"
    #include <stdlib.h>
 
-   static int cGoCodexDownloadInit(void* codexCtx, char* cid, size_t chunkSize, bool local, void* resp) {
-      return codex_download_init(codexCtx, cid, chunkSize, local, (CodexCallback) callback, resp);
+   static int cGoStorageDownloadInit(void* storageCtx, char* cid, size_t chunkSize, bool local, void* resp) {
+      return storage_download_init(storageCtx, cid, chunkSize, local, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexDownloadChunk(void* codexCtx, char* cid, void* resp) {
-      return codex_download_chunk(codexCtx, cid, (CodexCallback) callback, resp);
+   static int cGoStorageDownloadChunk(void* storageCtx, char* cid, void* resp) {
+      return storage_download_chunk(storageCtx, cid, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexDownloadStream(void* codexCtx, char* cid, size_t chunkSize, bool local, const char* filepath, void* resp) {
-      return codex_download_stream(codexCtx, cid, chunkSize, local, filepath, (CodexCallback) callback, resp);
+   static int cGoStorageDownloadStream(void* storageCtx, char* cid, size_t chunkSize, bool local, const char* filepath, void* resp) {
+      return storage_download_stream(storageCtx, cid, chunkSize, local, filepath, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexDownloadCancel(void* codexCtx, char* cid, void* resp) {
-      return codex_download_cancel(codexCtx, cid, (CodexCallback) callback, resp);
+   static int cGoStorageDownloadCancel(void* storageCtx, char* cid, void* resp) {
+      return storage_download_cancel(storageCtx, cid, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexDownloadManifest(void* codexCtx, char* cid, void* resp) {
-      return codex_download_manifest(codexCtx, cid, (CodexCallback) callback, resp);
+   static int cGoStorageDownloadManifest(void* storageCtx, char* cid, void* resp) {
+      return storage_download_manifest(storageCtx, cid, (StorageCallback) callback, resp);
    }
 */
 import "C"
@@ -37,7 +37,7 @@ import (
 type OnDownloadProgressFunc func(read, total int, percent float64, err error)
 
 // DownloadStreamOptions is used to download a file
-// in a streaming manner in Codex.
+// in a streaming manner in Logos Storage.
 type DownloadStreamOptions = struct {
 	// Filepath is the path destination used by DownloadStream.
 	// If it is set, the content will be written into the specified
@@ -89,7 +89,7 @@ type DownloadInitOptions = struct {
 }
 
 // Manifest is the object containing the information of
-// a file in Codex.
+// a file in Logos Storage.
 type Manifest struct {
 	// Cid is the content identifier over the network
 	Cid string
@@ -113,18 +113,18 @@ type Manifest struct {
 	Protected bool `json:"protected"`
 }
 
-// DownloadManifest retrieves the Codex manifest from its cid.
+// DownloadManifest retrieves the Logos Storage manifest from its cid.
 // The session identifier is the cid, i.e you cannot have multiple
 // sessions for a cid.
-func (node CodexNode) DownloadManifest(cid string) (Manifest, error) {
+func (node StorageNode) DownloadManifest(cid string) (Manifest, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
 
-	if C.cGoCodexDownloadManifest(node.ctx, cCid, bridge.resp) != C.RET_OK {
-		return Manifest{}, bridge.callError("cGoCodexDownloadManifest")
+	if C.cGoStorageDownloadManifest(node.ctx, cCid, bridge.resp) != C.RET_OK {
+		return Manifest{}, bridge.callError("cGoStorageDownloadManifest")
 	}
 
 	val, err := bridge.wait()
@@ -148,7 +148,7 @@ func (node CodexNode) DownloadManifest(cid string) (Manifest, error) {
 // If options.writer is set, the data will be written into that writer.
 // The options filepath and writer are not mutually exclusive, i.e you can write
 // in different places in a same call.
-func (node CodexNode) DownloadStream(ctx context.Context, cid string, options DownloadStreamOptions) error {
+func (node StorageNode) DownloadStream(ctx context.Context, cid string, options DownloadStreamOptions) error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
@@ -207,8 +207,8 @@ func (node CodexNode) DownloadStream(ctx context.Context, cid string, options Do
 
 	var cLocal = C.bool(options.Local)
 
-	if C.cGoCodexDownloadStream(node.ctx, cCid, options.ChunkSize.toSizeT(), cLocal, cFilepath, bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexDownloadLocal")
+	if C.cGoStorageDownloadStream(node.ctx, cCid, options.ChunkSize.toSizeT(), cLocal, cFilepath, bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageDownloadLocal")
 	}
 
 	// Create a done channel to signal the goroutine to stop
@@ -255,7 +255,7 @@ func (node CodexNode) DownloadStream(ctx context.Context, cid string, options Do
 // DownloadInit initializes the download process for a specific CID.
 // This method should be used if you want to manage the download session
 // and the chunk downloads manually.
-func (node CodexNode) DownloadInit(cid string, options DownloadInitOptions) error {
+func (node StorageNode) DownloadInit(cid string, options DownloadInitOptions) error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
@@ -264,8 +264,8 @@ func (node CodexNode) DownloadInit(cid string, options DownloadInitOptions) erro
 
 	var cLocal = C.bool(options.Local)
 
-	if C.cGoCodexDownloadInit(node.ctx, cCid, options.ChunkSize.toSizeT(), cLocal, bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexDownloadInit")
+	if C.cGoStorageDownloadInit(node.ctx, cCid, options.ChunkSize.toSizeT(), cLocal, bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageDownloadInit")
 	}
 
 	_, err := bridge.wait()
@@ -277,9 +277,9 @@ func (node CodexNode) DownloadInit(cid string, options DownloadInitOptions) erro
 // When using this method, you are managing at your own
 // the total size downloaded (use DownloadManifest to get the
 // datasetSize).
-// When the download is complete, you need to call `CodexDownloadCancel`
+// When the download is complete, you need to call `StorageDownloadCancel`
 // to free the resources.
-func (node CodexNode) DownloadChunk(cid string) ([]byte, error) {
+func (node StorageNode) DownloadChunk(cid string) ([]byte, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
@@ -292,8 +292,8 @@ func (node CodexNode) DownloadChunk(cid string) ([]byte, error) {
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
 
-	if C.cGoCodexDownloadChunk(node.ctx, cCid, bridge.resp) != C.RET_OK {
-		return nil, bridge.callError("cGoCodexDownloadChunk")
+	if C.cGoStorageDownloadChunk(node.ctx, cCid, bridge.resp) != C.RET_OK {
+		return nil, bridge.callError("cGoStorageDownloadChunk")
 	}
 
 	if _, err := bridge.wait(); err != nil {
@@ -306,15 +306,15 @@ func (node CodexNode) DownloadChunk(cid string) ([]byte, error) {
 // DownloadCancel cancels a download session.
 // It can be only if the download session is managed manually.
 // It doesn't work with DownloadStream.
-func (node CodexNode) DownloadCancel(cid string) error {
+func (node StorageNode) DownloadCancel(cid string) error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
 
-	if C.cGoCodexDownloadCancel(node.ctx, cCid, bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexDownloadCancel")
+	if C.cGoStorageDownloadCancel(node.ctx, cCid, bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageDownloadCancel")
 	}
 
 	_, err := bridge.wait()

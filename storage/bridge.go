@@ -1,9 +1,9 @@
-package codex
+package storage
 
 /*
    #include <stdbool.h>
    #include <stdlib.h>
-   #include "libcodex.h"
+   #include "libstorage.h"
 
    typedef struct {
        int ret;

@@ -1,27 +1,27 @@
-package codex
+package storage
 
 /*
    #include "bridge.h"
    #include <stdlib.h>
 
-   static int cGoCodexUploadInit(void* codexCtx, char* filepath, size_t chunkSize, void* resp) {
-      return codex_upload_init(codexCtx, filepath, chunkSize, (CodexCallback) callback, resp);
+   static int cGoStorageUploadInit(void* storageCtx, char* filepath, size_t chunkSize, void* resp) {
+      return storage_upload_init(storageCtx, filepath, chunkSize, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexUploadChunk(void* codexCtx, char* sessionId, const uint8_t* chunk, size_t len, void* resp) {
-      return codex_upload_chunk(codexCtx, sessionId, chunk, len, (CodexCallback) callback, resp);
+   static int cGoStorageUploadChunk(void* storageCtx, char* sessionId, const uint8_t* chunk, size_t len, void* resp) {
+      return storage_upload_chunk(storageCtx, sessionId, chunk, len, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexUploadFinalize(void* codexCtx, char* sessionId, void* resp) {
-      return codex_upload_finalize(codexCtx, sessionId, (CodexCallback) callback, resp);
+   static int cGoStorageUploadFinalize(void* storageCtx, char* sessionId, void* resp) {
+      return storage_upload_finalize(storageCtx, sessionId, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexUploadCancel(void* codexCtx, char* sessionId, void* resp) {
-      return codex_upload_cancel(codexCtx, sessionId, (CodexCallback) callback, resp);
+   static int cGoStorageUploadCancel(void* storageCtx, char* sessionId, void* resp) {
+      return storage_upload_cancel(storageCtx, sessionId, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexUploadFile(void* codexCtx, char* sessionId, void* resp) {
-      return codex_upload_file(codexCtx, sessionId, (CodexCallback) callback, resp);
+   static int cGoStorageUploadFile(void* storageCtx, char* sessionId, void* resp) {
+      return storage_upload_file(storageCtx, sessionId, (StorageCallback) callback, resp);
    }
 */
 import "C"
@@ -45,7 +45,7 @@ type UploadOptions struct {
 	// It is used to detect the mimetype.
 	Filepath string
 
-	// ChunkSize is the size of each upload chunk, passed as `blockSize` to the Codex node
+	// ChunkSize is the size of each upload chunk, passed as `blockSize` to the Logos Storage node
 	// store. Default is to 64 KB.
 	ChunkSize ChunkSize
 
@@ -82,26 +82,26 @@ func getReaderSize(r io.Reader) int64 {
 // It returns a session ID that can be used for subsequent upload operations.
 // This function is called by UploadReader and UploadFile internally.
 // You should use this function only if you need to manage the upload session manually.
-func (node CodexNode) UploadInit(options *UploadOptions) (string, error) {
+func (node StorageNode) UploadInit(options *UploadOptions) (string, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
 	var cFilename = C.CString(options.Filepath)
 	defer C.free(unsafe.Pointer(cFilename))
 
-	if C.cGoCodexUploadInit(node.ctx, cFilename, options.ChunkSize.toSizeT(), bridge.resp) != C.RET_OK {
-		return "", bridge.callError("cGoCodexUploadInit")
+	if C.cGoStorageUploadInit(node.ctx, cFilename, options.ChunkSize.toSizeT(), bridge.resp) != C.RET_OK {
+		return "", bridge.callError("cGoStorageUploadInit")
 	}
 
 	return bridge.wait()
 }
 
-// UploadChunk uploads a chunk of data to the Codex node.
+// UploadChunk uploads a chunk of data to the Logos Storage node.
 // It takes the session ID returned by UploadInit
 // and a byte slice containing the chunk data.
 // This function is called by UploadReader internally.
 // You should use this function only if you need to manage the upload session manually.
-func (node CodexNode) UploadChunk(sessionId string, chunk []byte) error {
+func (node StorageNode) UploadChunk(sessionId string, chunk []byte) error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
@@ -113,8 +113,8 @@ func (node CodexNode) UploadChunk(sessionId string, chunk []byte) error {
 		cChunkPtr = (*C.uint8_t)(unsafe.Pointer(&chunk[0]))
 	}
 
-	if C.cGoCodexUploadChunk(node.ctx, cSessionId, cChunkPtr, C.size_t(len(chunk)), bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexUploadChunk")
+	if C.cGoStorageUploadChunk(node.ctx, cSessionId, cChunkPtr, C.size_t(len(chunk)), bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageUploadChunk")
 	}
 
 	_, err := bridge.wait()
@@ -125,15 +125,15 @@ func (node CodexNode) UploadChunk(sessionId string, chunk []byte) error {
 // It takes the session ID returned by UploadInit.
 // This function is called by UploadReader and UploadFile internally.
 // You should use this function only if you need to manage the upload session manually.
-func (node CodexNode) UploadFinalize(sessionId string) (string, error) {
+func (node StorageNode) UploadFinalize(sessionId string) (string, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
 	var cSessionId = C.CString(sessionId)
 	defer C.free(unsafe.Pointer(cSessionId))
 
-	if C.cGoCodexUploadFinalize(node.ctx, cSessionId, bridge.resp) != C.RET_OK {
-		return "", bridge.callError("cGoCodexUploadFinalize")
+	if C.cGoStorageUploadFinalize(node.ctx, cSessionId, bridge.resp) != C.RET_OK {
+		return "", bridge.callError("cGoStorageUploadFinalize")
 	}
 
 	return bridge.wait()
@@ -142,31 +142,31 @@ func (node CodexNode) UploadFinalize(sessionId string) (string, error) {
 // UploadCancel cancels an ongoing upload session.
 // It can be only if the upload session is managed manually.
 // It doesn't work with UploadFile.
-func (node CodexNode) UploadCancel(sessionId string) error {
+func (node StorageNode) UploadCancel(sessionId string) error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
 	var cSessionId = C.CString(sessionId)
 	defer C.free(unsafe.Pointer(cSessionId))
 
-	if C.cGoCodexUploadCancel(node.ctx, cSessionId, bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexUploadCancel")
+	if C.cGoStorageUploadCancel(node.ctx, cSessionId, bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageUploadCancel")
 	}
 
 	_, err := bridge.wait()
 	return err
 }
 
-// UploadReader uploads data from an io.Reader to the Codex node.
+// UploadReader uploads data from an io.Reader to the Logos Storage node.
 // It takes the upload options and the reader as parameters.
 // It returns the CID of the uploaded file or an error.
 //
 // Internally, it calls:
 // - UploadInit to create the upload session.
-// - UploadChunk to upload a chunk to codex.
+// - UploadChunk to upload a chunk to storage.
 // - UploadFinalize to finalize the upload session.
 // - UploadCancel if an error occurs.
-func (node CodexNode) UploadReader(ctx context.Context, options UploadOptions, r io.Reader) (string, error) {
+func (node StorageNode) UploadReader(ctx context.Context, options UploadOptions, r io.Reader) (string, error) {
 	sessionId, err := node.UploadInit(&options)
 	if err != nil {
 		return "", err
@@ -235,20 +235,20 @@ func (node CodexNode) UploadReader(ctx context.Context, options UploadOptions, r
 }
 
 // UploadReaderAsync is the asynchronous version of UploadReader using a goroutine.
-func (node CodexNode) UploadReaderAsync(ctx context.Context, options UploadOptions, r io.Reader, onDone func(cid string, err error)) {
+func (node StorageNode) UploadReaderAsync(ctx context.Context, options UploadOptions, r io.Reader, onDone func(cid string, err error)) {
 	go func() {
 		cid, err := node.UploadReader(ctx, options, r)
 		onDone(cid, err)
 	}()
 }
 
-// UploadFile uploads a file to the Codex node.
+// UploadFile uploads a file to the Logos Storage node.
 // It takes the upload options as parameter.
 // It returns the CID of the uploaded file or an error.
 //
 // The options parameter contains the following fields:
 // - filepath: the full path of the file to upload.
-// - chunkSize: the size of each upload chunk, passed as `blockSize` to the Codex node
+// - chunkSize: the size of each upload chunk, passed as `blockSize` to the Logos Storage node
 // store. Default is to 64 KB.
 // - onProgress: a callback function that is called after each chunk is uploaded with:
 //   - read: the number of bytes read in the last chunk.
@@ -262,7 +262,7 @@ func (node CodexNode) UploadReaderAsync(ctx context.Context, options UploadOptio
 // is sent to the stream.
 //
 // Internally, it calls UploadInit to create the upload session.
-func (node CodexNode) UploadFile(ctx context.Context, options UploadOptions) (string, error) {
+func (node StorageNode) UploadFile(ctx context.Context, options UploadOptions) (string, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
@@ -303,8 +303,8 @@ func (node CodexNode) UploadFile(ctx context.Context, options UploadOptions) (st
 	var cSessionId = C.CString(sessionId)
 	defer C.free(unsafe.Pointer(cSessionId))
 
-	if C.cGoCodexUploadFile(node.ctx, cSessionId, bridge.resp) != C.RET_OK {
-		return "", bridge.callError("cGoCodexUploadFile")
+	if C.cGoStorageUploadFile(node.ctx, cSessionId, bridge.resp) != C.RET_OK {
+		return "", bridge.callError("cGoStorageUploadFile")
 	}
 
 	// Create a done channel to signal the goroutine to stop
@@ -349,7 +349,7 @@ func (node CodexNode) UploadFile(ctx context.Context, options UploadOptions) (st
 }
 
 // UploadFileAsync is the asynchronous version of UploadFile using a goroutine.
-func (node CodexNode) UploadFileAsync(ctx context.Context, options UploadOptions, onDone func(cid string, err error)) {
+func (node StorageNode) UploadFileAsync(ctx context.Context, options UploadOptions, onDone func(cid string, err error)) {
 	go func() {
 		cid, err := node.UploadFile(ctx, options)
 		onDone(cid, err)

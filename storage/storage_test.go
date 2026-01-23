@@ -1,11 +1,11 @@
-package codex
+package storage
 
 import "testing"
 
 func TestManifests(t *testing.T) {
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 
-	manifests, err := codex.Manifests()
+	manifests, err := storage.Manifests()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -14,9 +14,9 @@ func TestManifests(t *testing.T) {
 		t.Fatal("expected manifests to be empty")
 	}
 
-	cid, _ := uploadHelper(t, codex)
+	cid, _ := uploadHelper(t, storage)
 
-	manifests, err = codex.Manifests()
+	manifests, err = storage.Manifests()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,9 +33,9 @@ func TestManifests(t *testing.T) {
 }
 
 func TestSpace(t *testing.T) {
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 
-	space, err := codex.Space()
+	space, err := storage.Space()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,9 +56,9 @@ func TestSpace(t *testing.T) {
 		t.Fatal("expected quota reserved bytes to be non-zero")
 	}
 
-	uploadHelper(t, codex)
+	uploadHelper(t, storage)
 
-	space, err = codex.Space()
+	space, err = storage.Space()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,31 +73,31 @@ func TestSpace(t *testing.T) {
 }
 
 func TestFetch(t *testing.T) {
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 
-	cid, _ := uploadHelper(t, codex)
+	cid, _ := uploadHelper(t, storage)
 
-	_, err := codex.Fetch(cid)
+	_, err := storage.Fetch(cid)
 	if err != nil {
 		t.Fatal("expected error when fetching non-existent manifest")
 	}
 }
 
 func TestFetchCidDoesNotExist(t *testing.T) {
-	codex := newCodexNode(t, Config{BlockRetries: 1})
+	storage := newStorageNode(t, Config{BlockRetries: 1})
 
-	_, err := codex.Fetch("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
+	_, err := storage.Fetch("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
 	if err == nil {
 		t.Fatal("expected error when fetching non-existent manifest")
 	}
 }
 
 func TestDelete(t *testing.T) {
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 
-	cid, _ := uploadHelper(t, codex)
+	cid, _ := uploadHelper(t, storage)
 
-	manifests, err := codex.Manifests()
+	manifests, err := storage.Manifests()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,12 +105,12 @@ func TestDelete(t *testing.T) {
 		t.Fatal("expected manifests to be empty after deletion")
 	}
 
-	err = codex.Delete(cid)
+	err = storage.Delete(cid)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	manifests, err = codex.Manifests()
+	manifests, err = storage.Manifests()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,11 +121,11 @@ func TestDelete(t *testing.T) {
 }
 
 func TestExists(t *testing.T) {
-	codex := newCodexNode(t)
+	storage := newStorageNode(t)
 
-	cid, _ := uploadHelper(t, codex)
+	cid, _ := uploadHelper(t, storage)
 
-	exists, err := codex.Exists(cid)
+	exists, err := storage.Exists(cid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,12 +133,12 @@ func TestExists(t *testing.T) {
 		t.Fatal("expected cid to exist")
 	}
 
-	err = codex.Delete(cid)
+	err = storage.Delete(cid)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	exists, err = codex.Exists(cid)
+	exists, err = storage.Exists(cid)
 	if err != nil {
 		t.Fatal(err)
 	}

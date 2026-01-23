@@ -1,58 +1,58 @@
-package codex
+package storage
 
 /*
    #include "bridge.h"
    #include <stdlib.h>
 
-   void libcodexNimMain(void);
+   void libstorageNimMain(void);
 
-   static void codex_host_init_once(void){
+   static void storage_host_init_once(void){
        static int done;
-       if (!__atomic_exchange_n(&done, 1, __ATOMIC_SEQ_CST)) libcodexNimMain();
+       if (!__atomic_exchange_n(&done, 1, __ATOMIC_SEQ_CST)) libstorageNimMain();
    }
 
    // resp must be set != NULL in case interest on retrieving data from the callback
    void callback(int ret, char* msg, size_t len, void* resp);
 
-   static void* cGoCodexNew(const char* configJson, void* resp) {
-       void* ret = codex_new(configJson, (CodexCallback) callback, resp);
+   static void* cGoStorageNew(const char* configJson, void* resp) {
+       void* ret = storage_new(configJson, (StorageCallback) callback, resp);
        return ret;
    }
 
-   static int cGoCodexStart(void* codexCtx, void* resp) {
-       return codex_start(codexCtx, (CodexCallback) callback, resp);
+   static int cGoStorageStart(void* storageCtx, void* resp) {
+       return storage_start(storageCtx, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexStop(void* codexCtx, void* resp) {
-       return codex_stop(codexCtx, (CodexCallback) callback, resp);
+   static int cGoStorageStop(void* storageCtx, void* resp) {
+       return storage_stop(storageCtx, (StorageCallback) callback, resp);
    }
 
-	static int cGoCodexClose(void* codexCtx, void* resp) {
-		return codex_close(codexCtx, (CodexCallback) callback, resp);
+	static int cGoStorageClose(void* storageCtx, void* resp) {
+		return storage_close(storageCtx, (StorageCallback) callback, resp);
 	}
 
-   static int cGoCodexDestroy(void* codexCtx, void* resp) {
-       return codex_destroy(codexCtx, (CodexCallback) callback, resp);
+   static int cGoStorageDestroy(void* storageCtx, void* resp) {
+       return storage_destroy(storageCtx, (StorageCallback) callback, resp);
    }
 
-    static int cGoCodexVersion(void* codexCtx, void* resp) {
-       return codex_version(codexCtx, (CodexCallback) callback, resp);
+    static int cGoStorageVersion(void* storageCtx, void* resp) {
+       return storage_version(storageCtx, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexRevision(void* codexCtx, void* resp) {
-       return codex_revision(codexCtx, (CodexCallback) callback, resp);
+   static int cGoStorageRevision(void* storageCtx, void* resp) {
+       return storage_revision(storageCtx, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexRepo(void* codexCtx, void* resp) {
-       return codex_repo(codexCtx, (CodexCallback) callback, resp);
+   static int cGoStorageRepo(void* storageCtx, void* resp) {
+       return storage_repo(storageCtx, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexSpr(void* codexCtx, void* resp) {
-       return codex_spr(codexCtx, (CodexCallback) callback, resp);
+   static int cGoStorageSpr(void* storageCtx, void* resp) {
+       return storage_spr(storageCtx, (StorageCallback) callback, resp);
    }
 
-   static int cGoCodexPeerId(void* codexCtx, void* resp) {
-       return codex_peer_id(codexCtx, (CodexCallback) callback, resp);
+   static int cGoStoragePeerId(void* storageCtx, void* resp) {
+       return storage_peer_id(storageCtx, (StorageCallback) callback, resp);
    }
 */
 import "C"
@@ -110,11 +110,11 @@ type Config struct {
 	// Default: 8008
 	MetricsPort int `json:"metrics-port,omitempty"`
 
-	// The directory where codex will store configuration and data
+	// The directory where Logos Storage will store configuration and data
 	// Default:
-	// $HOME\AppData\Roaming\Codex on Windows
-	// $HOME/Library/Application Support/Codex on macOS
-	// $HOME/.cache/codex on Linux
+	// $HOME\AppData\Roaming\Storage on Windows
+	// $HOME/Library/Application Support/Storage on macOS
+	// $HOME/.cache/storage on Linux
 	DataDir string `json:"data-dir,omitempty"`
 
 	// Multi Addresses to listen on
@@ -146,7 +146,7 @@ type Config struct {
 	NumThreads int `json:"num-threads,omitempty"`
 
 	// Node agent string which is used as identifier in network
-	// Default: "Codex"
+	// Default: "Logos Storage"
 	AgentString string `json:"agent-string,omitempty"`
 
 	// Backend for main repo store (fs, sqlite, leveldb)
@@ -183,7 +183,7 @@ type Config struct {
 	LogFile string `json:"log-file,omitempty"`
 }
 
-type CodexNode struct {
+type StorageNode struct {
 	ctx unsafe.Pointer
 }
 
@@ -201,12 +201,12 @@ func (c ChunkSize) toSizeT() C.size_t {
 	return C.size_t(c.valOrDefault())
 }
 
-// New creates a new Codex node with the provided configuration.
-// The node is not started automatically; you need to call CodexStart
+// New creates a new Logos Storage node with the provided configuration.
+// The node is not started automatically; you need to call StorageStart
 // to start it.
-// It returns a Codex node that can be used to interact
-// with the Codex network.
-func New(config Config) (*CodexNode, error) {
+// It returns a Logos Storage node that can be used to interact
+// with the Logos Storage network.
+func New(config Config) (*StorageNode, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
@@ -218,22 +218,22 @@ func New(config Config) (*CodexNode, error) {
 	cJsonConfig := C.CString(string(jsonConfig))
 	defer C.free(unsafe.Pointer(cJsonConfig))
 
-	ctx := C.cGoCodexNew(cJsonConfig, bridge.resp)
+	ctx := C.cGoStorageNew(cJsonConfig, bridge.resp)
 
 	if _, err := bridge.wait(); err != nil {
 		return nil, bridge.err
 	}
 
-	return &CodexNode{ctx: ctx}, bridge.err
+	return &StorageNode{ctx: ctx}, bridge.err
 }
 
-// Start starts the Codex node.
-func (node CodexNode) Start() error {
+// Start starts the Logos Storage node.
+func (node StorageNode) Start() error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexStart(node.ctx, bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexStart")
+	if C.cGoStorageStart(node.ctx, bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageStart")
 	}
 
 	_, err := bridge.wait()
@@ -241,34 +241,34 @@ func (node CodexNode) Start() error {
 }
 
 // StartAsync is the asynchronous version of Start.
-func (node CodexNode) StartAsync(onDone func(error)) {
+func (node StorageNode) StartAsync(onDone func(error)) {
 	go func() {
 		err := node.Start()
 		onDone(err)
 	}()
 }
 
-// Stop stops the Codex node.
-func (node CodexNode) Stop() error {
+// Stop stops the Logos Storage node.
+func (node StorageNode) Stop() error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexStop(node.ctx, bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexStop")
+	if C.cGoStorageStop(node.ctx, bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageStop")
 	}
 
 	_, err := bridge.wait()
 	return err
 }
 
-// Destroy destroys the Codex node, freeing all resources.
+// Destroy destroys the Logos Storage node, freeing all resources.
 // The node must be stopped before calling this method.
-func (node CodexNode) Destroy() error {
+func (node StorageNode) Destroy() error {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexClose(node.ctx, bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexClose")
+	if C.cGoStorageClose(node.ctx, bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageClose")
 	}
 
 	_, err := bridge.wait()
@@ -276,8 +276,8 @@ func (node CodexNode) Destroy() error {
 		return err
 	}
 
-	if C.cGoCodexDestroy(node.ctx, bridge.resp) != C.RET_OK {
-		return bridge.callError("cGoCodexDestroy")
+	if C.cGoStorageDestroy(node.ctx, bridge.resp) != C.RET_OK {
+		return bridge.callError("cGoStorageDestroy")
 	}
 
 	// We don't wait for the bridge here.
@@ -288,58 +288,58 @@ func (node CodexNode) Destroy() error {
 	return nil
 }
 
-// Version returns the version of the Codex node.
-func (node CodexNode) Version() (string, error) {
+// Version returns the version of the Logos Storage node.
+func (node StorageNode) Version() (string, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexVersion(node.ctx, bridge.resp) != C.RET_OK {
-		return "", bridge.callError("cGoCodexVersion")
+	if C.cGoStorageVersion(node.ctx, bridge.resp) != C.RET_OK {
+		return "", bridge.callError("cGoStorageVersion")
 	}
 
 	return bridge.wait()
 }
 
-func (node CodexNode) Revision() (string, error) {
+func (node StorageNode) Revision() (string, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexRevision(node.ctx, bridge.resp) != C.RET_OK {
-		return "", bridge.callError("cGoCodexRevision")
+	if C.cGoStorageRevision(node.ctx, bridge.resp) != C.RET_OK {
+		return "", bridge.callError("cGoStorageRevision")
 	}
 
 	return bridge.wait()
 }
 
 // Repo returns the path of the data dir folder.
-func (node CodexNode) Repo() (string, error) {
+func (node StorageNode) Repo() (string, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexRepo(node.ctx, bridge.resp) != C.RET_OK {
-		return "", bridge.callError("cGoCodexRepo")
+	if C.cGoStorageRepo(node.ctx, bridge.resp) != C.RET_OK {
+		return "", bridge.callError("cGoStorageRepo")
 	}
 
 	return bridge.wait()
 }
 
-func (node CodexNode) Spr() (string, error) {
+func (node StorageNode) Spr() (string, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexSpr(node.ctx, bridge.resp) != C.RET_OK {
-		return "", bridge.callError("cGoCodexSpr")
+	if C.cGoStorageSpr(node.ctx, bridge.resp) != C.RET_OK {
+		return "", bridge.callError("cGoStorageSpr")
 	}
 
 	return bridge.wait()
 }
 
-func (node CodexNode) PeerId() (string, error) {
+func (node StorageNode) PeerId() (string, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
-	if C.cGoCodexPeerId(node.ctx, bridge.resp) != C.RET_OK {
-		return "", bridge.callError("cGoCodexPeerId")
+	if C.cGoStoragePeerId(node.ctx, bridge.resp) != C.RET_OK {
+		return "", bridge.callError("cGoStoragePeerId")
 	}
 
 	return bridge.wait()

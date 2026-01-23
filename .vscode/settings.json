@@ -1,9 +1,9 @@
 {
     "go.toolsEnvVars": {
         "CGO_ENABLED": "1",
-        "CGO_CFLAGS": "-I${workspaceFolder}/vendor/nim-codex/library",
-        "CGO_LDFLAGS": "-L${workspaceFolder}/vendor/nim-codex/build -lcodex -Wl,-rpath,${workspaceFolder}/vendor/nim-codex/build",
-        "LD_LIBRARY_PATH": "${workspaceFolder}/vendor/nim-codex/build:${env:LD_LIBRARY_PATH}"
+        "CGO_CFLAGS": "-I${workspaceFolder}/vendor/logos-storage-nim/library",
+        "CGO_LDFLAGS": "-L${workspaceFolder}/vendor/logos-storage-nim/build -lstorage -Wl,-rpath,${workspaceFolder}/vendor/logos-storage-nim/build",
+        "LD_LIBRARY_PATH": "${workspaceFolder}/vendor/logos-storage-nim/build:${env:LD_LIBRARY_PATH}"
     },
     "go.testTimeout": "2m"
 }
