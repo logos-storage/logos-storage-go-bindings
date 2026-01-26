@@ -1,14 +1,14 @@
 ## v0.0.30 (2026-01-26)
 ### Notes
 
-- Fix: use Nat: "none" in recently added tests
-- Build: small updates to dev env: debugging, gotestsum and makefile
-- Chore: rename Codex to Logos
+- Fix tests long path on Windows
 
 ## v0.0.29 (2026-01-26)
 ### Notes
 
-- Intermediate release
+- Fix: use Nat: "none" in recently added tests
+- Build: small updates to dev env: debugging, gotestsum and makefile
+- Chore: rename Codex to Logos
 
 ## v0.0.28 (2026-01-23)
 ### Notes
