@@ -42,7 +42,7 @@ LIBS_DIR := $(abspath ./libs)
 STORAGE_OS := linux
 STORAGE_ARCH := amd64
 STORAGE_VERSION := v0.3.2
-STORAGE_DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(STORAGE_VERSION)/storage-${STORAGE_OS}-${STORAGE_ARCH}-${STORAGE_VERSION}.zip"
+STORAGE_DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(STORAGE_VERSION)/libstorage-${STORAGE_OS}-${STORAGE_ARCH}-${STORAGE_VERSION}.zip"
 
 fetch-libstorage:
     mkdir -p $(LIBS_DIR); \
@@ -83,7 +83,7 @@ let
 
   # Pre-fetch libstorage to avoid network during build
   storageLib = pkgs.fetchzip {
-    url = "https://github.com/logos-storage/logos-storage-nim/releases/download/${storageVersion}/storage-${os}-${arch}-${storageVersion}.zip";
+    url = "https://github.com/logos-storage/logos-storage-nim/releases/download/${storageVersion}/libstorage-${os}-${arch}-${storageVersion}.zip";
     hash = hash;
     stripRoot = false;
   };
