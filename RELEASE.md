@@ -46,7 +46,7 @@ STORAGE_DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/rele
 
 fetch-libstorage:
     mkdir -p $(LIBS_DIR); \
-    curl -fSL --create-dirs -o $(LIBS_DIR)/storage-${STORAGE_OS}-${STORAGE_ARCH}-${STORAGE_VESION}.zip ${STORAGE_DOWNLOAD_URL}; \
+    curl -fSL --create-dirs -o $(LIBS_DIR)/libstorage-${STORAGE_OS}-${STORAGE_ARCH}-${STORAGE_VESION}.zip ${STORAGE_DOWNLOAD_URL}; \
     unzip -o -qq $(LIBS_DIR)/libstorage-${STORAGE_OS}-${STORAGE_ARCH}-${STORAGE_VESION}.zip -d $(LIBS_DIR); \
     rm -f $(LIBS_DIR)/libstorage*.zip;
 ```
