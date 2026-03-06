@@ -49,7 +49,7 @@ clean:
 First you need to `fetch` the artefacts for your `OS` and `ARCH`:
 
 ```sh
-OS=macos ARCH=arm64 make fetch
+OS=darwin ARCH=arm64 make fetch
 ```
 
 Then you can build your project using:
