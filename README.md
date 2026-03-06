@@ -23,7 +23,7 @@ CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 OS ?= "linux"
 ARCH ?= "amd64"
 VERSION ?= "v0.0.21"
-DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-go-bindings/releases/download/$(VERSION)/storage-${OS}-${ARCH}.zip"
+DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/storage-${OS}-${ARCH}.zip"
 
 # Edit your binary name here
 ifeq ($(OS),Windows_NT)

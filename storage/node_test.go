@@ -13,10 +13,8 @@ func TestStorageVersion(t *testing.T) {
 		t.Fatalf("Failed to create Logos Storage node: %v", err)
 	}
 
-	version, err := node.Version()
-	if err != nil {
-		t.Fatalf("Failed to get Logos Storage version: %v", err)
-	}
+	version := node.Version()
+
 	if version == "" {
 		t.Fatal("Logos Storage version is empty")
 	}
@@ -31,10 +29,8 @@ func TestStorageRevision(t *testing.T) {
 		t.Fatalf("Failed to create Logos Storage node: %v", err)
 	}
 
-	revision, err := node.Revision()
-	if err != nil {
-		t.Fatalf("Failed to get Logos Storage revision: %v", err)
-	}
+	revision := node.Revision()
+
 	if revision == "" {
 		t.Fatal("Logos Storage revision is empty")
 	}
