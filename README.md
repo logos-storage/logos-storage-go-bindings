@@ -22,8 +22,8 @@ CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 # Fetch configuration
 OS ?= "linux"
 ARCH ?= "amd64"
-VERSION ?= "v0.0.21"
-DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/storage-${OS}-${ARCH}.zip"
+VERSION ?= "v0.3.2"
+DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-${OS}-${ARCH}-$(VERSION).zip"
 
 # Edit your binary name here
 ifeq ($(OS),Windows_NT)
@@ -34,9 +34,9 @@ endif
 
 fetch:
 	@echo "Fetching libstorage from GitHub Actions from: ${DOWNLOAD_URL}"
-	@curl -fSL --create-dirs -o $(LIBS_DIR)/storage-${OS}-${ARCH}.zip ${DOWNLOAD_URL}
-	@unzip -o -qq $(LIBS_DIR)/storage-${OS}-${ARCH}.zip -d $(LIBS_DIR)
-	@rm -f $(LIBS_DIR)/*.zip
+	curl -fSL --create-dirs -o $(LIBS_DIR)/libstorage-${OS}-${ARCH}-$(VERSION).zip ${DOWNLOAD_URL}
+	unzip -o -qq $(LIBS_DIR)/libstorage-${OS}-${ARCH}-$(VERSION).zip -d $(LIBS_DIR)
+	rm -f $(LIBS_DIR)/*.zip
 
 build:
 	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go build -o $(BIN_NAME) main.go
@@ -60,7 +60,7 @@ make build
 
 That's it!
 
-For an example on how to use this package, please take a look at our [example-go-bindings](https://github.com/logos-storage/example-logos-storage-go-bindings) repo.
+For an example on how to use this package, please take a look at our [example-go-bindings](https://github.com/logos-storage/logos-storage-go-bindings-example) repo.
 
 If you want to build the library yourself, you need to clone this repo and follow the instructions
 of the next step.
