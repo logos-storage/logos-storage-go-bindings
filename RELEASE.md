@@ -77,9 +77,9 @@ let
   hash =
     if stdenv.hostPlatform.isDarwin
     # nix store prefetch-file --json --unpack https://github.com/logos-storage/logos-storage-nim/releases/download/v0.3.2/libstorage-darwin-arm64-v0.3.2.zip | jq -r .hash
-    then "sha256-3CHIWoSjo0plsYqzXQWm1EtY1STcljV4yfXTPon90uE="
+    then "sha256-YnMhmM0/JAmpdVref24n8l08UY7me0IQBbelIBfz2UE=="
     # nix store prefetch-file --json --unpack https://github.com/logos-storage/logos-storage-nim/releases/download/v0.3.2/libstorage-linux-amd64-v0.3.2.zip | jq -r .hash
-    else "sha256-YxW2vFZlcLrOx1PYgWW4MIstH/oFBRF0ooS0sl3v6ig=";
+    else "sha256-YDrT+MhXDMuKHwi1Dhg+uMg0vsC2PchlvX1Rb3HkRow=";
 
   # Pre-fetch libstorage to avoid network during build
   storageLib = pkgs.fetchzip {
