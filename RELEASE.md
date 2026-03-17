@@ -60,7 +60,7 @@ If you use Nix in a sandboxed environment, you cannot use curl to download the a
 ```bash
 nix store prefetch-file --json --unpack https://github.com/logos-storage/logos-storage-nim/releases/download/v0.3.2/libstorage-darwin-arm64-v0.3.2.zip | jq -r .hash
 
-# [10.4 MiB DL] sha256-3CHIWoSjo0plsYqzXQWm1EtY1STcljV4yfXTPon90uE=
+# sha256-YnMhmM0/JAmpdVref24n8l08UY7me0IQBbelIBfz2UE=
 ```
 
 Then include this hash in your Nix configuration. For example:
