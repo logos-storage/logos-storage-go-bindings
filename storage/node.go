@@ -31,16 +31,16 @@ package storage
 		return storage_close(storageCtx, (StorageCallback) callback, resp);
 	}
 
-   static int cGoStorageDestroy(void* storageCtx, void* resp) {
-       return storage_destroy(storageCtx, (StorageCallback) callback, resp);
+   static int cGoStorageDestroy(void* storageCtx) {
+       return storage_destroy(storageCtx);
    }
 
-    static int cGoStorageVersion(void* storageCtx, void* resp) {
-       return storage_version(storageCtx, (StorageCallback) callback, resp);
+    static char* cGoStorageVersion(void* storageCtx) {
+       return storage_version(storageCtx);
    }
 
-   static int cGoStorageRevision(void* storageCtx, void* resp) {
-       return storage_revision(storageCtx, (StorageCallback) callback, resp);
+   static char* cGoStorageRevision(void* storageCtx) {
+       return storage_revision(storageCtx);
    }
 
    static int cGoStorageRepo(void* storageCtx, void* resp) {
@@ -276,7 +276,7 @@ func (node StorageNode) Destroy() error {
 		return err
 	}
 
-	if C.cGoStorageDestroy(node.ctx, bridge.resp) != C.RET_OK {
+	if C.cGoStorageDestroy(node.ctx) != C.RET_OK {
 		return bridge.callError("cGoStorageDestroy")
 	}
 
@@ -289,26 +289,18 @@ func (node StorageNode) Destroy() error {
 }
 
 // Version returns the version of the Logos Storage node.
-func (node StorageNode) Version() (string, error) {
-	bridge := newBridgeCtx()
-	defer bridge.free()
+func (node StorageNode) Version() string {
+	cStr := C.cGoStorageVersion(node.ctx)
+	defer C.free(unsafe.Pointer(cStr))
 
-	if C.cGoStorageVersion(node.ctx, bridge.resp) != C.RET_OK {
-		return "", bridge.callError("cGoStorageVersion")
-	}
-
-	return bridge.wait()
+	return C.GoString(cStr)
 }
 
-func (node StorageNode) Revision() (string, error) {
-	bridge := newBridgeCtx()
-	defer bridge.free()
+func (node StorageNode) Revision() string {
+	cStr := C.cGoStorageRevision(node.ctx)
+	defer C.free(unsafe.Pointer(cStr))
 
-	if C.cGoStorageRevision(node.ctx, bridge.resp) != C.RET_OK {
-		return "", bridge.callError("cGoStorageRevision")
-	}
-
-	return bridge.wait()
+	return C.GoString(cStr)
 }
 
 // Repo returns the path of the data dir folder.
