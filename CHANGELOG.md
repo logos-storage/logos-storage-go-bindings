@@ -1,3 +1,8 @@
+## v0.3.2 (2026-03-18)
+### Notes
+
+- The version is now in sync with Logos Storage Nim’s version.
+
 ## v0.0.30 (2026-01-26)
 ### Notes
 
