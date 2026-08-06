@@ -63,7 +63,7 @@ type DebugInfo struct {
 	ID string `json:"id"`
 
 	// Peer info addresses
-	// Specified with `ListenAddresses` in `StorageConfig`
+	// Specified with `ListenIp` and `ListenPort` in `Config`
 	Addrs []string `json:"addrs"`
 
 	Spr string `json:"spr"`
