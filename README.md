@@ -22,7 +22,7 @@ CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 # Fetch configuration
 OS ?= "linux"
 ARCH ?= "amd64"
-VERSION ?= "v0.4.1"
+VERSION ?= "v0.4.2"
 DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-${OS}-${ARCH}-$(VERSION).zip"
 
 # Edit your binary name here

@@ -14,7 +14,7 @@ func defaultConfigHelper(t *testing.T) Config {
 		LogFormat:      LogFormatNoColors,
 		MetricsEnabled: false,
 		BlockRetries:   3000,
-		Nat:            "none",
+		Nat:            "extip:127.0.0.1",
 	}
 }
 
