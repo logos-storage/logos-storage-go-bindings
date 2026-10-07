@@ -54,6 +54,10 @@ package storage
    static int cGoStoragePeerId(void* storageCtx, void* resp) {
        return storage_peer_id(storageCtx, (StorageCallback) callback, resp);
    }
+
+   static int cGoStorageGetMetrics(void* storageCtx, void* resp) {
+       return storage_get_metrics(storageCtx, (StorageCallback) callback, resp);
+   }
 */
 import "C"
 import (
@@ -90,6 +94,13 @@ const (
 	LevelDb RepoKind = "leveldb"
 )
 
+type NetworkPreset string
+
+const (
+	NetworkLogosTest NetworkPreset = "logos.test"
+	NetworkLogosDev  NetworkPreset = "logos.dev"
+)
+
 type Config struct {
 	// Default: INFO
 	LogLevel string `json:"log-level,omitempty"`
@@ -117,9 +128,13 @@ type Config struct {
 	// $HOME/.cache/storage on Linux
 	DataDir string `json:"data-dir,omitempty"`
 
-	// Multi Addresses to listen on
-	// Default: ["/ip4/0.0.0.0/tcp/0"]
-	ListenAddrs []string `json:"listen-addrs,omitempty"`
+	// IP address to listen on for remote peer connections (ipv4 or ipv6)
+	// Default: 0.0.0.0
+	ListenIp string `json:"listen-ip,omitempty"`
+
+	// TCP port to listen on for remote peer connections
+	// Default: 0 (random free port)
+	ListenPort int `json:"listen-port,omitempty"`
 
 	// Specify method to use for determining public address.
 	// Must be one of: any, none, upnp, pmp, extip:<IP>
@@ -134,8 +149,18 @@ type Config struct {
 	// Default: "key"
 	NetPrivKeyFile string `json:"net-privkey,omitempty"`
 
+	// The network preset to connect to (logos.test, logos.dev).
+	// Overridden by BootstrapNodes when set.
+	Network NetworkPreset `json:"network,omitempty"`
+
 	// Specifies one or more bootstrap nodes to use when connecting to the network.
+	// When set, overrides the network preset.
 	BootstrapNodes []string `json:"bootstrap-node,omitempty"`
+
+	// Do not bootstrap the node at all. Typically only useful when creating
+	// a new Logos Storage network.
+	// Default: false
+	NoBootstrapNode bool `json:"no-bootstrap-node,omitempty"`
 
 	// The maximum number of peers to connect to.
 	// Default: 160
@@ -174,13 +199,27 @@ type Config struct {
 	// Default: 3000
 	BlockRetries int `json:"block-retries,omitempty"`
 
-	// The size of the block cache, 0 disables the cache -
-	// might help on slow hardrives
-	// Default: 0
-	CacheSize int `json:"cache-size,omitempty"`
-
 	// Default: "" (no log file)
 	LogFile string `json:"log-file,omitempty"`
+
+	// Route DHT provider lookups through the Mix protocol via the
+	// DhtMixProxies. Hides the requester's identity from the proxy.
+	// Default: false
+	MixEnabled bool `json:"mix-enabled,omitempty"`
+
+	// Path to the Mix relay pool JSON file.
+	MixPool string `json:"mix-pool,omitempty"`
+
+	// Inline JSON content of the Mix relay pool.
+	// Takes precedence over MixPool when non-empty.
+	MixPoolJson string `json:"mix-pool-json,omitempty"`
+
+	// Peers used as dht-proxy destinations when Mix is enabled.
+	DhtMixProxies []string `json:"dht-mix-proxy,omitempty"`
+
+	// Max concurrent DHT proxy lookups handled by this node.
+	// Omit to use the protocol default.
+	DhtProxyMaxInFlight *int `json:"dht-proxy-max-inflight,omitempty"`
 }
 
 type StorageNode struct {
@@ -332,6 +371,19 @@ func (node StorageNode) PeerId() (string, error) {
 
 	if C.cGoStoragePeerId(node.ctx, bridge.resp) != C.RET_OK {
 		return "", bridge.callError("cGoStoragePeerId")
+	}
+
+	return bridge.wait()
+}
+
+// GetMetrics returns the node metrics in the Logos openmetrics-compatible
+// format (https://github.com/logos-co/openmetrics-module).
+func (node StorageNode) GetMetrics() (string, error) {
+	bridge := newBridgeCtx()
+	defer bridge.free()
+
+	if C.cGoStorageGetMetrics(node.ctx, bridge.resp) != C.RET_OK {
+		return "", bridge.callError("cGoStorageGetMetrics")
 	}
 
 	return bridge.wait()

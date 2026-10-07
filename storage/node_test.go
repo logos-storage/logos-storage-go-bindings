@@ -80,6 +80,20 @@ func TestPeerId(t *testing.T) {
 	t.Logf("Logos Storage PeerId: %s", peerId)
 }
 
+func TestGetMetrics(t *testing.T) {
+	node := newStorageNode(t)
+
+	metrics, err := node.GetMetrics()
+	if err != nil {
+		t.Fatalf("Failed to get Logos Storage metrics: %v", err)
+	}
+	if metrics == "" {
+		t.Fatal("Logos Storage metrics is empty")
+	}
+
+	t.Logf("Logos Storage metrics: %s", metrics)
+}
+
 func TestStorageQuota(t *testing.T) {
 	node := newStorageNode(t, Config{
 		StorageQuota: 1024 * 1024 * 1024, // 1GB
@@ -120,6 +134,16 @@ func TestCreateAndDestroyMultipleInstancesWithSameDatadir(t *testing.T) {
 		}
 
 		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func TestNoBootstrapNode(t *testing.T) {
+	node := newStorageNode(t, Config{
+		NoBootstrapNode: true,
+	})
+
+	if node == nil {
+		t.Fatal("expected Logos Storage node to be created")
 	}
 }
 

@@ -1,3 +1,16 @@
+## v0.4.1 (2026-08-06)
+### Notes
+
+- Update Logos Storage Nim to v0.4.1
+- Breaking: `Config.ListenAddrs` is replaced by `Config.ListenIp` and
+  `Config.ListenPort`
+- Breaking: `Config.CacheSize` is removed
+- Add `GetMetrics` to read the node metrics in the openmetrics format
+- Add `TogglePrivateQueries` and the Mix configuration: `MixEnabled`,
+  `MixPool`, `MixPoolJson` and `DhtMixProxies`
+- Add `Network` to select a network preset (logos.test, logos.dev)
+- Add `NoBootstrapNode` and `DhtProxyMaxInFlight`
+
 ## v0.3.2 (2026-03-18)
 ### Notes
 

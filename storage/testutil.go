@@ -22,42 +22,23 @@ func newStorageNode(t *testing.T, opts ...Config) *StorageNode {
 	config := defaultConfigHelper(t)
 
 	if len(opts) > 0 {
-		c := opts[0]
+		defaults := config
+		config = opts[0]
 
-		if c.BlockRetries > 0 {
-			config.BlockRetries = c.BlockRetries
+		if config.DataDir == "" {
+			config.DataDir = defaults.DataDir
 		}
 
-		if c.LogLevel != "" {
-			config.LogLevel = c.LogLevel
+		if config.LogFormat == "" {
+			config.LogFormat = defaults.LogFormat
 		}
 
-		if c.LogFile != "" {
-			config.LogFile = c.LogFile
+		if config.BlockRetries == 0 {
+			config.BlockRetries = defaults.BlockRetries
 		}
 
-		if len(c.BootstrapNodes) != 0 {
-			config.BootstrapNodes = c.BootstrapNodes
-		}
-
-		if c.DiscoveryPort != 0 {
-			config.DiscoveryPort = c.DiscoveryPort
-		}
-
-		if c.StorageQuota != 0 {
-			config.StorageQuota = c.StorageQuota
-		}
-
-		if c.NumThreads != 0 {
-			config.NumThreads = c.NumThreads
-		}
-
-		if c.BlockTtl != "" {
-			config.BlockTtl = c.BlockTtl
-		}
-
-		if c.BlockMaintenanceInterval != "" {
-			config.BlockMaintenanceInterval = c.BlockMaintenanceInterval
+		if config.Nat == "" {
+			config.Nat = defaults.Nat
 		}
 	}
 
