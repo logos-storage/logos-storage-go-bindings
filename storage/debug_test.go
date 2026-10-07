@@ -20,8 +20,8 @@ func TestDebug(t *testing.T) {
 	if info.Spr == "" {
 		t.Error("Debug info Spr is empty")
 	}
-	if len(info.AnnounceAddresses) == 0 {
-		t.Error("Debug info AnnounceAddresses is empty")
+	if len(info.ProviderAddresses) == 0 {
+		t.Error("Debug info ProviderAddresses is empty")
 	}
 }
 

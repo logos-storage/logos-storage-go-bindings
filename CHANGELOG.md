@@ -1,3 +1,15 @@
+## v0.4.2 (2026-08-06)
+### Notes
+
+- Update Logos Storage Nim to v0.4.2
+- Breaking: `Nat` only accepts `auto` and `extip:<IP>`. The `any`, `none`, `upnp`
+  and `pmp` values are gone
+- Breaking: `NoBootstrapNode` now requires `Nat` to be set to `extip:<IP>`
+- Breaking: `DebugInfo.AnnounceAddresses` is renamed to `DebugInfo.ProviderAddresses`
+- Add `DebugInfo.DiscoveryAddresses`, `DebugInfo.Nat` and `DebugInfo.Connections`
+- `New` returns an error instead of terminating the process when the
+  configuration is invalid
+
 ## v0.4.1 (2026-08-06)
 ### Notes
 

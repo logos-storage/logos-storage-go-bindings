@@ -36,7 +36,7 @@ func TestConnectWithAddress(t *testing.T) {
 		LogFormat:      LogFormatNoColors,
 		MetricsEnabled: false,
 		DiscoveryPort:  8090,
-		Nat:            "none",
+		Nat:            "extip:127.0.0.1",
 	})
 	if err != nil {
 		t.Fatalf("Failed to create Logos Storage node 1: %v", err)
@@ -51,6 +51,7 @@ func TestConnectWithAddress(t *testing.T) {
 		LogFormat:      LogFormatNoColors,
 		MetricsEnabled: false,
 		DiscoveryPort:  8091,
+		Nat:            "extip:127.0.0.1",
 	})
 	if err != nil {
 		t.Fatalf("Failed to create Logos Storage node 2: %v", err)

@@ -35,17 +35,49 @@ type RoutingTable struct {
 	Nodes     []Node `json:"nodes"`
 }
 
+type NatInfo struct {
+	// Reachability determined by AutoNAT: Unknown, NotReachable or Reachable
+	Reachability string `json:"reachability"`
+
+	// True when the node runs the discovery protocol in client mode,
+	// meaning it is not reachable and does not participate to DHT queries.
+	ClientMode bool `json:"clientMode"`
+
+	// True when the relay service is started, which happens when the node is
+	// not reachable. It does not mean a reservation was obtained.
+	RelayRunning bool `json:"relayRunning"`
+
+	// Port mapping protocol in use: none, upnp, pmp, pcp or direct.
+	PortMapping string `json:"portMapping"`
+}
+
+type Connection struct {
+	PeerId string `json:"peerId"`
+
+	// False when the connection goes through a circuit relay
+	Direct bool `json:"direct"`
+}
+
 type DebugInfo struct {
 	// Peer ID
 	ID string `json:"id"`
 
 	// Peer info addresses
-	// Specified with `ListenAddresses` in `StorageConfig`
+	// Specified with `ListenIp` and `ListenPort` in `Config`
 	Addrs []string `json:"addrs"`
 
-	Spr               string       `json:"spr"`
-	AnnounceAddresses []string     `json:"announceAddresses"`
-	PeersTable        RoutingTable `json:"table"`
+	Spr string `json:"spr"`
+
+	// Addresses contained in the provider record, the one announced
+	// for the content the node provides
+	ProviderAddresses []string `json:"providerAddresses"`
+
+	// UDP addresses announced in the DHT
+	DiscoveryAddresses []string `json:"discoveryAddresses"`
+
+	PeersTable  RoutingTable `json:"table"`
+	Nat         NatInfo      `json:"nat"`
+	Connections []Connection `json:"connections"`
 }
 
 type PeerRecord struct {

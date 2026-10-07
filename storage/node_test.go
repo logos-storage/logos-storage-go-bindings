@@ -112,7 +112,7 @@ func TestCreateAndDestroyMultipleInstancesWithSameDatadir(t *testing.T) {
 		LogFormat:      LogFormatNoColors,
 		MetricsEnabled: false,
 		BlockRetries:   5,
-		Nat:            "none",
+		Nat:            "extip:127.0.0.1",
 	}
 
 	for range 2 {
@@ -134,6 +134,20 @@ func TestCreateAndDestroyMultipleInstancesWithSameDatadir(t *testing.T) {
 		}
 
 		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func TestInvalidConfig(t *testing.T) {
+	config := defaultConfigHelper(t)
+	config.Nat = "upnp"
+
+	node, err := New(config)
+	if err == nil {
+		t.Fatal("expected an error for an invalid nat value")
+	}
+
+	if node != nil {
+		t.Fatal("expected no Logos Storage node to be created")
 	}
 }
 

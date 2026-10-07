@@ -137,8 +137,8 @@ type Config struct {
 	ListenPort int `json:"listen-port,omitempty"`
 
 	// Specify method to use for determining public address.
-	// Must be one of: any, none, upnp, pmp, extip:<IP>
-	// Default: any
+	// Must be one of: auto, extip:<IP>
+	// Default: auto
 	Nat string `json:"nat,omitempty"`
 
 	// Discovery (UDP) port
@@ -158,7 +158,7 @@ type Config struct {
 	BootstrapNodes []string `json:"bootstrap-node,omitempty"`
 
 	// Do not bootstrap the node at all. Typically only useful when creating
-	// a new Logos Storage network.
+	// a new Logos Storage network. Requires Nat to be set to extip:<IP>.
 	// Default: false
 	NoBootstrapNode bool `json:"no-bootstrap-node,omitempty"`
 
@@ -260,10 +260,14 @@ func New(config Config) (*StorageNode, error) {
 	ctx := C.cGoStorageNew(cJsonConfig, bridge.resp)
 
 	if _, err := bridge.wait(); err != nil {
-		return nil, bridge.err
+		if ctx != nil {
+			C.cGoStorageDestroy(ctx)
+		}
+
+		return nil, err
 	}
 
-	return &StorageNode{ctx: ctx}, bridge.err
+	return &StorageNode{ctx: ctx}, nil
 }
 
 // Start starts the Logos Storage node.
