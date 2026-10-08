@@ -23,11 +23,11 @@ import (
 )
 
 type Node struct {
-	NodeId  string  `json:"nodeId"`
-	PeerId  string  `json:"peerId"`
-	Record  string  `json:"record"`
-	Address *string `json:"address"`
-	Seen    bool    `json:"seen"`
+	PeerId    string   `json:"peerId"`
+	Addresses []string `json:"addresses"`
+
+	// Unix time in seconds, nil for the local node
+	LastSeen *int64 `json:"lastSeen"`
 }
 
 type RoutingTable struct {
@@ -67,13 +67,6 @@ type DebugInfo struct {
 	Addrs []string `json:"addrs"`
 
 	Spr string `json:"spr"`
-
-	// Addresses contained in the provider record, the one announced
-	// for the content the node provides
-	ProviderAddresses []string `json:"providerAddresses"`
-
-	// UDP addresses announced in the DHT
-	DiscoveryAddresses []string `json:"discoveryAddresses"`
 
 	PeersTable  RoutingTable `json:"table"`
 	Nat         NatInfo      `json:"nat"`

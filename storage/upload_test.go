@@ -181,3 +181,21 @@ func TestManualUpload(t *testing.T) {
 		t.Fatalf("UploadReader returned %s but expected %s", cid, expectedCID)
 	}
 }
+
+func TestUploadNoAdvertise(t *testing.T) {
+	storage := newStorageNode(t)
+
+	buf := bytes.NewBuffer([]byte("Hello World!"))
+	cid, err := storage.UploadReader(context.Background(), UploadOptions{Filepath: "hello.txt", NoAdvertise: true}, buf)
+	if err != nil {
+		t.Fatalf("UploadReader failed: %v", err)
+	}
+
+	advertised, err := storage.GetAdvertise(cid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if advertised {
+		t.Fatal("expected cid to not be advertised")
+	}
+}
