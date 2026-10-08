@@ -62,43 +62,18 @@ That's it!
 
 For an example on how to use this package, please take a look at our [example-go-bindings](https://github.com/logos-storage/logos-storage-go-bindings-example) repo.
 
-If you want to build the library yourself, you need to clone this repo and follow the instructions
-of the next step.
-
 ## Development
 
-To build the required dependencies for this module, the `make` command needs to be executed.
-If you are integrating this module into another project via `go get`, ensure that you navigate
-to the `logos-storage-go-bindings` module directory and run the `make` commands.
-
-### Steps to install
-
-Follow these steps to install and set up the module:
-
-1. Make sure your system has the [prerequisites](https://github.com/logos-storage/logos-storage-nim) to run a local Logos Storage node.
-
-2. Fetch the dependencies:
-   ```sh
-   make update
-   ```
-
-3. Build the library:
-   ```sh
-   make libstorage
-   ```
-
-You can pass flags to the Logos Storage building step by using `STORAGE_LIB_PARAMS`. For example,
-if you want to enable debug API for peers, you can build the library using:
+This repo uses the same prebuilt artifacts. Clone it, then fetch the library for your `OS` and `ARCH`
+(default: `linux` and `amd64`):
 
 ```sh
-STORAGE_LIB_PARAMS="-d:storage_enable_api_debug_peers=true" make libstorage
+OS=darwin ARCH=arm64 make fetch
 ```
 
-or you can use a convenience `libstorage-with-debug-api` make target:
+The library and its header are stored in the `libs` folder. The version is set by `VERSION` in the `Makefile`.
 
-```sh
-make libstorage-with-debug-api
-```
+On Windows, use `OS=windows` and add the `libs` folder to your `PATH` before you run the tests.
 
 To run the test, you have to make sure you have `gotestsum` installed on your system, e.g.:
 
@@ -349,6 +324,7 @@ record, err := node.StoragePeerDebug(peerId)
 ```
 
 `StoragePeerDebug` is only available if you built with `-d:STORAGE_enable_api_debug_peers=true` flag.
+The prebuilt artifacts are built without this flag.
 
 ### Context and cancellation
 

@@ -16,6 +16,7 @@
 
 # Generated dependencies and cache
 nimcache
+libs
 
 # Test files
 storage/testdata/hello.downloaded.txt

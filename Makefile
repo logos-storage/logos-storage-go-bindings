@@ -1,31 +1,25 @@
 # Makefile for Logos Storage Go Bindings
 
-LOGOS_STORAGE_NIM_DIR := vendor/logos-storage-nim
-LOGOS_STORAGE_NIM_LIB_DIR   := $(abspath $(LOGOS_STORAGE_NIM_DIR)/library)
-LOGOS_STORAGE_NIM_BUILD_DIR := $(abspath $(LOGOS_STORAGE_NIM_DIR)/build)
+LIBS_DIR := $(abspath ./libs)
 
-CGO_CFLAGS  := -I$(LOGOS_STORAGE_NIM_LIB_DIR)
-CGO_LDFLAGS := -L$(LOGOS_STORAGE_NIM_BUILD_DIR) -lstorage -Wl,-rpath,$(LOGOS_STORAGE_NIM_BUILD_DIR)
+CGO_CFLAGS  := -I$(LIBS_DIR)
+CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 
-.PHONY: all clean update libstorage build test
+# Fetch configuration
+OS ?= "linux"
+ARCH ?= "amd64"
+VERSION ?= "v0.4.3"
+DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-${OS}-${ARCH}-$(VERSION).zip"
+
+.PHONY: all clean fetch build test
 
 all: build
 
-submodules:
-	@echo "Fetching submodules..."
-	@git submodule update --init --recursive
-
-update: | submodules
-	@echo "Updating logos-storage-nim..."
-	@$(MAKE) -C $(LOGOS_STORAGE_NIM_DIR) update
-
-libstorage:
-	@echo "Building libstorage..."
-	@$(MAKE) -C $(LOGOS_STORAGE_NIM_DIR) libstorage
-
-libstorage-with-debug-api:
-	@echo "Building libstorage..."
-	@$(MAKE) -C $(LOGOS_STORAGE_NIM_DIR) libstorage STORAGE_LIB_PARAMS="-d:storage_enable_api_debug_peers"
+fetch:
+	@echo "Fetching libstorage from GitHub Actions from: ${DOWNLOAD_URL}"
+	curl -fSL --create-dirs -o $(LIBS_DIR)/libstorage-${OS}-${ARCH}-$(VERSION).zip ${DOWNLOAD_URL}
+	unzip -o -qq $(LIBS_DIR)/libstorage-${OS}-${ARCH}-$(VERSION).zip -d $(LIBS_DIR)
+	rm -f $(LIBS_DIR)/*.zip
 
 build:
 	@echo "Building Logos Storage Go Bindings..."
@@ -44,5 +38,5 @@ test-with-params:
 
 clean:
 	@echo "Cleaning up..."
-	@git submodule deinit -f $(LOGOS_STORAGE_NIM_DIR)
+	@rm -Rf $(LIBS_DIR)/*
 	@rm -f storage-go

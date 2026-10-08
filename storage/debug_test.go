@@ -4,7 +4,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestDebug(t *testing.T) {
@@ -73,66 +72,5 @@ func TestUpdateLogLevel(t *testing.T) {
 
 	if strings.Contains(string(content), "INF") {
 		t.Errorf("Log file contains INFO statement after log level update: %s", string(content))
-	}
-}
-
-func TestStoragePeerDebug(t *testing.T) {
-	var bootstrap, node1, node2 *StorageNode
-	var err error
-
-	bootstrap = newStorageNode(t, Config{
-		DiscoveryPort: 8092,
-	})
-
-	spr, err := bootstrap.Spr()
-	if err != nil {
-		t.Fatalf("Failed to get bootstrap spr: %v", err)
-	}
-
-	bootstrapNodes := []string{spr}
-
-	node1 = newStorageNode(t, Config{
-		DiscoveryPort:  8090,
-		BootstrapNodes: bootstrapNodes,
-	})
-
-	node2 = newStorageNode(t, Config{
-		DiscoveryPort:  8091,
-		BootstrapNodes: bootstrapNodes,
-	})
-
-	peerId, err := node2.PeerId()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var record PeerRecord
-	for range 10 {
-		record, err = node1.StoragePeerDebug(peerId)
-		if err == nil {
-			break
-		}
-
-		time.Sleep(1 * time.Second)
-	}
-
-	if err != nil {
-		t.Fatalf("Logos StoragePeerDebug call failed: %v", err)
-	}
-
-	if record.PeerId == "" {
-		t.Fatalf("Logos StoragePeerDebug call failed: %v", err)
-	}
-	if record.PeerId == "" {
-		t.Error("Logos StoragePeerDebug info PeerId is empty")
-	}
-	if record.SeqNo == 0 {
-		t.Error("Logos StoragePeerDebug info SeqNo is empty")
-	}
-	if len(record.Addresses) == 0 {
-		t.Error("Logos StoragePeerDebug info Addresses is empty")
-	}
-	if record.PeerId != peerId {
-		t.Errorf("Logos StoragePeerDebug info PeerId (%s) does not match requested PeerId (%s)", record.PeerId, peerId)
 	}
 }

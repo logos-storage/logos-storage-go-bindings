@@ -6,42 +6,47 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.target.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        target:
+          - os: ubuntu-latest
+            name: linux
+            cpu: amd64
+
+          - os: ubuntu-24.04-arm
+            name: linux
+            cpu: arm64
+
+          - os: macos-latest
+            name: darwin
+            cpu: arm64
+
+          - os: windows-latest
+            name: windows
+            cpu: amd64
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
 
-      - name: Install Rust 1.85.0
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.85.0
+      - name: Fetch libstorage
+        env:
+          OS: ${{ matrix.target.name }}
+          ARCH: ${{ matrix.target.cpu }}
+        run: make fetch
 
-      - name: Record submodule commit
-        run: git -C vendor/logos-storage-nim rev-parse HEAD > vendor/logos-storage-nim/.storage-commit
-
-      - name: Cache libstorage build
-        id: cache-libstorage
-        uses: actions/cache@v4
-        with:
-          path: vendor/logos-storage-nim/build
-          key: ${{ runner.os }}-libstorage-${{ hashFiles('vendor/logos-storage-nim/.storage-commit') }}
-
-      - name: Build libstorage
-        if: steps.cache-libstorage.outputs.cache-hit != 'true'
-        run: |
-          make update
-          STORAGE_LIB_PARAMS="-d:storage_enable_api_debug_peers=true" make libstorage
+      # Windows has no rpath: the DLL is found through the PATH
+      - name: Add libs to PATH (Windows)
+        if: matrix.target.name == 'windows'
+        shell: bash
+        run: echo "${{ github.workspace }}\libs" >> "$GITHUB_PATH"
 
       - name: Build Logos Storage go
         run: make
