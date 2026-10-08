@@ -4,8 +4,8 @@ package storage
    #include "bridge.h"
    #include <stdlib.h>
 
-   static int cGoStorageUploadInit(void* storageCtx, char* filepath, size_t chunkSize, void* resp) {
-      return storage_upload_init(storageCtx, filepath, chunkSize, (StorageCallback) callback, resp);
+   static int cGoStorageUploadInit(void* storageCtx, char* filepath, size_t chunkSize, bool advertise, void* resp) {
+      return storage_upload_init(storageCtx, filepath, chunkSize, advertise, (StorageCallback) callback, resp);
    }
 
    static int cGoStorageUploadChunk(void* storageCtx, char* sessionId, const uint8_t* chunk, size_t len, void* resp) {
@@ -49,6 +49,10 @@ type UploadOptions struct {
 	// store. Default is to 64 KB.
 	ChunkSize ChunkSize
 
+	// NoAdvertise, if true, the dataset is neither announced to the DHT
+	// nor served to other peers.
+	NoAdvertise bool
+
 	// OnProgress is a callback function that is called after each chunk is uploaded with:
 	//   - read: the number of bytes read in the last chunk.
 	//   - total: the total number of bytes read so far.
@@ -89,7 +93,7 @@ func (node StorageNode) UploadInit(options *UploadOptions) (string, error) {
 	var cFilename = C.CString(options.Filepath)
 	defer C.free(unsafe.Pointer(cFilename))
 
-	if C.cGoStorageUploadInit(node.ctx, cFilename, options.ChunkSize.toSizeT(), bridge.resp) != C.RET_OK {
+	if C.cGoStorageUploadInit(node.ctx, cFilename, options.ChunkSize.toSizeT(), C.bool(!options.NoAdvertise), bridge.resp) != C.RET_OK {
 		return "", bridge.callError("cGoStorageUploadInit")
 	}
 

@@ -28,7 +28,7 @@ endif
 
 OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
-VERSION := v0.4.3
+VERSION := v0.5.3
 DOWNLOAD_URL := https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip
 
 # Edit your binary name here
@@ -178,6 +178,7 @@ Other information is available after the node is started:
 version, err := node.Version()
 spr, err := node.Spr()
 peerId, err := node.PeerId()
+network, err := node.Network()
 ```
 
 ### Upload
@@ -248,7 +249,7 @@ whenever you want!
 When you receive a cid, you can download the `Manifest` to get information about the data:
 
 ```go
-manifest, err := storage.DownloadManifest(cid)
+manifest, err := storage.DownloadManifest(cid, DownloadManifestOptions{})
 ```
 
 It is not mandatory for downloading the data but it is really useful.
@@ -309,10 +310,38 @@ space, err := node.Space()
 
 cid := "..."
 err := node.Delete(cid)
-err := node.Fetch(cid)
+err := node.Fetch(cid, FetchOptions{})
 ```
 
 The `Fetch` method downloads remote data into your local node.
+
+### Advertise
+
+By default, a dataset is announced to the DHT and served to other peers.
+Set `NoAdvertise` in the upload, download or fetch options to keep it on your node only:
+
+```go
+cid, err := storage.UploadFile(ctx, UploadOptions{Filepath: "./testdata/hello.txt", NoAdvertise: true})
+```
+
+`NoAdvertise` is ignored by a download or a fetch when the manifest is already on your node.
+
+You can read and change this later:
+
+```go
+advertised, err := node.GetAdvertise(cid)
+err := node.SetAdvertise(cid, true)
+```
+
+### Private download
+
+Set `Private` in the download or fetch options to go through the Mix transport.
+The node must be configured with Mix (`MixEnabled`), otherwise the call fails.
+
+```go
+manifest, err := storage.DownloadManifest(cid, DownloadManifestOptions{Private: true})
+err := storage.DownloadStream(ctx, cid, DownloadStreamOptions{Private: true})
+```
 
 ### P2P
 

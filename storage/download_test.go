@@ -148,7 +148,7 @@ func TestDownloadManifest(t *testing.T) {
 	storage := newStorageNode(t)
 	cid, _ := uploadHelper(t, storage)
 
-	manifest, err := storage.DownloadManifest(cid)
+	manifest, err := storage.DownloadManifest(cid, DownloadManifestOptions{})
 	if err != nil {
 		t.Fatal("Error when downloading manifest:", err)
 	}
@@ -161,7 +161,7 @@ func TestDownloadManifest(t *testing.T) {
 func TestDownloadManifestWithNotExistingCid(t *testing.T) {
 	storage := newStorageNode(t, Config{BlockRetries: 1})
 
-	manifest, err := storage.DownloadManifest("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
+	manifest, err := storage.DownloadManifest("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", DownloadManifestOptions{})
 	if err == nil {
 		t.Fatal("Error when downloading manifest:", err)
 	}

@@ -4,24 +4,24 @@ package storage
    #include "bridge.h"
    #include <stdlib.h>
 
-   static int cGoStorageDownloadInit(void* storageCtx, char* cid, size_t chunkSize, bool local, void* resp) {
-      return storage_download_init(storageCtx, cid, chunkSize, local, (StorageCallback) callback, resp);
+   static int cGoStorageDownloadInit(void* storageCtx, char* cid, size_t chunkSize, bool local, bool isPrivate, bool advertise, void* resp) {
+      return storage_download_init(storageCtx, cid, chunkSize, local, isPrivate, advertise, (StorageCallback) callback, resp);
    }
 
    static int cGoStorageDownloadChunk(void* storageCtx, char* cid, void* resp) {
       return storage_download_chunk(storageCtx, cid, (StorageCallback) callback, resp);
    }
 
-   static int cGoStorageDownloadStream(void* storageCtx, char* cid, size_t chunkSize, bool local, const char* filepath, void* resp) {
-      return storage_download_stream(storageCtx, cid, chunkSize, local, filepath, (StorageCallback) callback, resp);
+   static int cGoStorageDownloadStream(void* storageCtx, char* cid, size_t chunkSize, const char* filepath, void* resp) {
+      return storage_download_stream(storageCtx, cid, chunkSize, filepath, (StorageCallback) callback, resp);
    }
 
    static int cGoStorageDownloadCancel(void* storageCtx, char* cid, void* resp) {
       return storage_download_cancel(storageCtx, cid, (StorageCallback) callback, resp);
    }
 
-   static int cGoStorageDownloadManifest(void* storageCtx, char* cid, void* resp) {
-      return storage_download_manifest(storageCtx, cid, (StorageCallback) callback, resp);
+   static int cGoStorageDownloadManifest(void* storageCtx, char* cid, bool isPrivate, bool advertise, void* resp) {
+      return storage_download_manifest(storageCtx, cid, isPrivate, advertise, (StorageCallback) callback, resp);
    }
 */
 import "C"
@@ -67,6 +67,16 @@ type DownloadStreamOptions = struct {
 	// from the network.
 	Local bool
 
+	// Private, if true, the download goes through the Mix transport.
+	// An existing download session for the same cid must use the same value.
+	Private bool
+
+	// NoAdvertise, if true, the dataset is neither announced to the DHT
+	// nor served to other peers.
+	// It is ignored when the manifest is already in the local node,
+	// use SetAdvertise instead.
+	NoAdvertise bool
+
 	// DatasetSize is the total size of the dataset being downloaded.
 	DatasetSize int
 
@@ -84,8 +94,30 @@ type DownloadInitOptions = struct {
 	// from the network.
 	Local bool
 
+	// Private, if true, the download goes through the Mix transport.
+	// An existing download session for the same cid must use the same value.
+	Private bool
+
+	// NoAdvertise, if true, the dataset is neither announced to the DHT
+	// nor served to other peers.
+	// It is ignored when the manifest is already in the local node,
+	// use SetAdvertise instead.
+	NoAdvertise bool
+
 	// ChunkSize is the size of each downloaded chunk. Default is to 64 KB.
 	ChunkSize ChunkSize
+}
+
+// DownloadManifestOptions is used to retrieve a manifest.
+type DownloadManifestOptions = struct {
+	// Private, if true, the manifest is fetched through the Mix transport.
+	Private bool
+
+	// NoAdvertise, if true, the dataset is neither announced to the DHT
+	// nor served to other peers.
+	// It is ignored when the manifest is already in the local node,
+	// use SetAdvertise instead.
+	NoAdvertise bool
 }
 
 // Manifest is the object containing the information of
@@ -116,14 +148,17 @@ type Manifest struct {
 // DownloadManifest retrieves the Logos Storage manifest from its cid.
 // The session identifier is the cid, i.e you cannot have multiple
 // sessions for a cid.
-func (node StorageNode) DownloadManifest(cid string) (Manifest, error) {
+// A manifest fetched from the network is stored in the local node.
+// Unless options.NoAdvertise is set, the node then announces the dataset
+// to the DHT and serves it to peers.
+func (node StorageNode) DownloadManifest(cid string, options DownloadManifestOptions) (Manifest, error) {
 	bridge := newBridgeCtx()
 	defer bridge.free()
 
 	var cCid = C.CString(cid)
 	defer C.free(unsafe.Pointer(cCid))
 
-	if C.cGoStorageDownloadManifest(node.ctx, cCid, bridge.resp) != C.RET_OK {
+	if C.cGoStorageDownloadManifest(node.ctx, cCid, C.bool(options.Private), C.bool(!options.NoAdvertise), bridge.resp) != C.RET_OK {
 		return Manifest{}, bridge.callError("cGoStorageDownloadManifest")
 	}
 
@@ -153,7 +188,10 @@ func (node StorageNode) DownloadStream(ctx context.Context, cid string, options 
 	defer bridge.free()
 
 	if options.DatasetSizeAuto {
-		manifest, err := node.DownloadManifest(cid)
+		manifest, err := node.DownloadManifest(cid, DownloadManifestOptions{
+			Private:     options.Private,
+			NoAdvertise: options.NoAdvertise,
+		})
 
 		if err != nil {
 			return err
@@ -193,8 +231,10 @@ func (node StorageNode) DownloadStream(ctx context.Context, cid string, options 
 	defer C.free(unsafe.Pointer(cCid))
 
 	err := node.DownloadInit(cid, DownloadInitOptions{
-		ChunkSize: options.ChunkSize,
-		Local:     options.Local,
+		ChunkSize:   options.ChunkSize,
+		Local:       options.Local,
+		Private:     options.Private,
+		NoAdvertise: options.NoAdvertise,
 	})
 	if err != nil {
 		return err
@@ -205,9 +245,7 @@ func (node StorageNode) DownloadStream(ctx context.Context, cid string, options 
 	var cFilepath = C.CString(options.Filepath)
 	defer C.free(unsafe.Pointer(cFilepath))
 
-	var cLocal = C.bool(options.Local)
-
-	if C.cGoStorageDownloadStream(node.ctx, cCid, options.ChunkSize.toSizeT(), cLocal, cFilepath, bridge.resp) != C.RET_OK {
+	if C.cGoStorageDownloadStream(node.ctx, cCid, options.ChunkSize.toSizeT(), cFilepath, bridge.resp) != C.RET_OK {
 		return bridge.callError("cGoStorageDownloadLocal")
 	}
 
@@ -264,7 +302,7 @@ func (node StorageNode) DownloadInit(cid string, options DownloadInitOptions) er
 
 	var cLocal = C.bool(options.Local)
 
-	if C.cGoStorageDownloadInit(node.ctx, cCid, options.ChunkSize.toSizeT(), cLocal, bridge.resp) != C.RET_OK {
+	if C.cGoStorageDownloadInit(node.ctx, cCid, options.ChunkSize.toSizeT(), cLocal, C.bool(options.Private), C.bool(!options.NoAdvertise), bridge.resp) != C.RET_OK {
 		return bridge.callError("cGoStorageDownloadInit")
 	}
 

@@ -55,6 +55,10 @@ package storage
        return storage_peer_id(storageCtx, (StorageCallback) callback, resp);
    }
 
+   static int cGoStorageNetwork(void* storageCtx, void* resp) {
+       return storage_network(storageCtx, (StorageCallback) callback, resp);
+   }
+
    static int cGoStorageGetMetrics(void* storageCtx, void* resp) {
        return storage_get_metrics(storageCtx, (StorageCallback) callback, resp);
    }
@@ -141,10 +145,6 @@ type Config struct {
 	// Default: auto
 	Nat string `json:"nat,omitempty"`
 
-	// Discovery (UDP) port
-	// Default: 8090
-	DiscoveryPort int `json:"disc-port,omitempty"`
-
 	// Source of network (secp256k1) private key file path or name
 	// Default: "key"
 	NetPrivKeyFile string `json:"net-privkey,omitempty"`
@@ -199,11 +199,19 @@ type Config struct {
 	// Default: 3000
 	BlockRetries int `json:"block-retries,omitempty"`
 
+	// Announce the content to the DHT and become a provider for this content.
+	// When false, the node announces nothing to the DHT, whatever the
+	// setting of each dataset (see SetAdvertise).
+	// Omit to use the default.
+	// Default: true
+	AdvertiseContent *bool `json:"advertise-content,omitempty"`
+
 	// Default: "" (no log file)
 	LogFile string `json:"log-file,omitempty"`
 
 	// Route DHT provider lookups through the Mix protocol via the
 	// DhtMixProxies. Hides the requester's identity from the proxy.
+	// Required by the Private option of the download and fetch calls.
 	// Default: false
 	MixEnabled bool `json:"mix-enabled,omitempty"`
 
@@ -375,6 +383,18 @@ func (node StorageNode) PeerId() (string, error) {
 
 	if C.cGoStoragePeerId(node.ctx, bridge.resp) != C.RET_OK {
 		return "", bridge.callError("cGoStoragePeerId")
+	}
+
+	return bridge.wait()
+}
+
+// Network returns the name of the network preset configured, e.g. "logos.test".
+func (node StorageNode) Network() (string, error) {
+	bridge := newBridgeCtx()
+	defer bridge.free()
+
+	if C.cGoStorageNetwork(node.ctx, bridge.resp) != C.RET_OK {
+		return "", bridge.callError("cGoStorageNetwork")
 	}
 
 	return bridge.wait()

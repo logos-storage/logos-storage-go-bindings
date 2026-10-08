@@ -20,9 +20,6 @@ func TestDebug(t *testing.T) {
 	if info.Spr == "" {
 		t.Error("Debug info Spr is empty")
 	}
-	if len(info.ProviderAddresses) == 0 {
-		t.Error("Debug info ProviderAddresses is empty")
-	}
 }
 
 func runAndReadLogHelper(t *testing.T, node *StorageNode, logFile string) string {

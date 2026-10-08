@@ -14,7 +14,7 @@ endif
 
 OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
-VERSION := v0.4.3
+VERSION := v0.5.3
 DOWNLOAD_URL := https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip
 
 .PHONY: all clean fetch build test
