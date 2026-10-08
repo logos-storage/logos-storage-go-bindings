@@ -77,7 +77,7 @@ func TestFetch(t *testing.T) {
 
 	cid, _ := uploadHelper(t, storage)
 
-	_, err := storage.Fetch(cid)
+	_, err := storage.Fetch(cid, FetchOptions{})
 	if err != nil {
 		t.Fatal("expected error when fetching non-existent manifest")
 	}
@@ -86,7 +86,7 @@ func TestFetch(t *testing.T) {
 func TestFetchCidDoesNotExist(t *testing.T) {
 	storage := newStorageNode(t, Config{BlockRetries: 1})
 
-	_, err := storage.Fetch("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
+	_, err := storage.Fetch("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", FetchOptions{})
 	if err == nil {
 		t.Fatal("expected error when fetching non-existent manifest")
 	}
@@ -144,5 +144,37 @@ func TestExists(t *testing.T) {
 	}
 	if exists {
 		t.Fatal("expected cid to not exist after deletion")
+	}
+}
+
+func TestGetAdvertise(t *testing.T) {
+	storage := newStorageNode(t)
+
+	cid, _ := uploadHelper(t, storage)
+
+	advertised, err := storage.GetAdvertise(cid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !advertised {
+		t.Fatal("expected cid to be advertised")
+	}
+}
+
+func TestSetAdvertise(t *testing.T) {
+	storage := newStorageNode(t)
+
+	cid, _ := uploadHelper(t, storage)
+
+	if err := storage.SetAdvertise(cid, false); err != nil {
+		t.Fatal(err)
+	}
+
+	advertised, err := storage.GetAdvertise(cid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if advertised {
+		t.Fatal("expected cid to not be advertised")
 	}
 }

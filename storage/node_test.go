@@ -80,6 +80,20 @@ func TestPeerId(t *testing.T) {
 	t.Logf("Logos Storage PeerId: %s", peerId)
 }
 
+func TestNetwork(t *testing.T) {
+	node := newStorageNode(t, Config{
+		Network: NetworkLogosDev,
+	})
+
+	network, err := node.Network()
+	if err != nil {
+		t.Fatalf("Failed to get Logos Storage network: %v", err)
+	}
+	if network != string(NetworkLogosDev) {
+		t.Fatalf("expected network %q, got %q", NetworkLogosDev, network)
+	}
+}
+
 func TestGetMetrics(t *testing.T) {
 	node := newStorageNode(t)
 

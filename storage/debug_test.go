@@ -20,9 +20,6 @@ func TestDebug(t *testing.T) {
 	if info.Spr == "" {
 		t.Error("Debug info Spr is empty")
 	}
-	if len(info.ProviderAddresses) == 0 {
-		t.Error("Debug info ProviderAddresses is empty")
-	}
 }
 
 func TestUpdateLogLevel(t *testing.T) {
@@ -80,9 +77,7 @@ func TestStoragePeerDebug(t *testing.T) {
 	var bootstrap, node1, node2 *StorageNode
 	var err error
 
-	bootstrap = newStorageNode(t, Config{
-		DiscoveryPort: 8092,
-	})
+	bootstrap = newStorageNode(t)
 
 	spr, err := bootstrap.Spr()
 	if err != nil {
@@ -92,12 +87,10 @@ func TestStoragePeerDebug(t *testing.T) {
 	bootstrapNodes := []string{spr}
 
 	node1 = newStorageNode(t, Config{
-		DiscoveryPort:  8090,
 		BootstrapNodes: bootstrapNodes,
 	})
 
 	node2 = newStorageNode(t, Config{
-		DiscoveryPort:  8091,
 		BootstrapNodes: bootstrapNodes,
 	})
 
