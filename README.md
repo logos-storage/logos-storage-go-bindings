@@ -20,23 +20,30 @@ CGO_CFLAGS  := -I$(LIBS_DIR)
 CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 
 # Fetch configuration
-OS ?= "linux"
-ARCH ?= "amd64"
-VERSION ?= "v0.4.2"
-DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-${OS}-${ARCH}-$(VERSION).zip"
+
+# Windows defines OS=Windows_NT in the environment
+ifeq ($(OS),Windows_NT)
+  OS := windows
+endif
+
+OS ?= $(shell go env GOOS)
+ARCH ?= $(shell go env GOARCH)
+VERSION := v0.4.3
+DOWNLOAD_URL := https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip
 
 # Edit your binary name here
-ifeq ($(OS),Windows_NT)
+ifeq ($(OS),windows)
   BIN_NAME := example.exe
 else
   BIN_NAME := example
 endif
 
 fetch:
-	@echo "Fetching libstorage from GitHub Actions from: ${DOWNLOAD_URL}"
-	curl -fSL --create-dirs -o $(LIBS_DIR)/libstorage-${OS}-${ARCH}-$(VERSION).zip ${DOWNLOAD_URL}
-	unzip -o -qq $(LIBS_DIR)/libstorage-${OS}-${ARCH}-$(VERSION).zip -d $(LIBS_DIR)
-	rm -f $(LIBS_DIR)/*.zip
+	@echo "Fetching libstorage from $(DOWNLOAD_URL)"
+	curl -fSL -o $(LIBS_DIR).zip $(DOWNLOAD_URL)
+	rm -Rf $(LIBS_DIR)/*
+	unzip -o -qq $(LIBS_DIR).zip -d $(LIBS_DIR)
+	rm -f $(LIBS_DIR).zip
 
 build:
 	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go build -o $(BIN_NAME) main.go
@@ -46,10 +53,17 @@ clean:
 	rm -Rf $(LIBS_DIR)/*
 ```
 
-First you need to `fetch` the artefacts for your `OS` and `ARCH`:
+First you need to `fetch` the artifacts. The OS and the architecture come from `go env`:
 
 ```sh
-OS=darwin ARCH=arm64 make fetch
+make fetch
+```
+
+The artifacts exist for `linux` (`amd64` and `arm64`), `darwin` (`arm64`) and `windows` (`amd64`).
+To fetch the artifacts of another platform, pass `OS` and `ARCH`:
+
+```sh
+make fetch OS=darwin ARCH=arm64
 ```
 
 Then you can build your project using:
@@ -62,43 +76,20 @@ That's it!
 
 For an example on how to use this package, please take a look at our [example-go-bindings](https://github.com/logos-storage/logos-storage-go-bindings-example) repo.
 
-If you want to build the library yourself, you need to clone this repo and follow the instructions
-of the next step.
-
 ## Development
 
-To build the required dependencies for this module, the `make` command needs to be executed.
-If you are integrating this module into another project via `go get`, ensure that you navigate
-to the `logos-storage-go-bindings` module directory and run the `make` commands.
-
-### Steps to install
-
-Follow these steps to install and set up the module:
-
-1. Make sure your system has the [prerequisites](https://github.com/logos-storage/logos-storage-nim) to run a local Logos Storage node.
-
-2. Fetch the dependencies:
-   ```sh
-   make update
-   ```
-
-3. Build the library:
-   ```sh
-   make libstorage
-   ```
-
-You can pass flags to the Logos Storage building step by using `STORAGE_LIB_PARAMS`. For example,
-if you want to enable debug API for peers, you can build the library using:
+This repo uses the same prebuilt artifacts. Clone it, then fetch the library:
 
 ```sh
-STORAGE_LIB_PARAMS="-d:storage_enable_api_debug_peers=true" make libstorage
+make fetch
 ```
 
-or you can use a convenience `libstorage-with-debug-api` make target:
+The library and its header are stored in the `libs` folder. The version is set by `VERSION` in the `Makefile`.
 
-```sh
-make libstorage-with-debug-api
-```
+To use a library you built yourself, put the library and `libstorage.h` in the `libs` folder instead.
+`make fetch` and `make clean` empty this folder.
+
+On Windows, add the `libs` folder to your `PATH` before you run the tests.
 
 To run the test, you have to make sure you have `gotestsum` installed on your system, e.g.:
 
@@ -348,7 +339,8 @@ peerId := "..."
 record, err := node.StoragePeerDebug(peerId)
 ```
 
-`StoragePeerDebug` is only available if you built with `-d:STORAGE_enable_api_debug_peers=true` flag.
+`StoragePeerDebug` is only available if you built with `-d:storage_enable_api_debug_peers=true` flag.
+The prebuilt artifacts are built without this flag.
 
 ### Context and cancellation
 

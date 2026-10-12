@@ -7,41 +7,42 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
 
-      - name: Install Rust 1.85.0
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.85.0
+      - name: Read libstorage version
+        id: libstorage
+        run: echo "version=$(sed -n 's/^VERSION[[:space:]]*:=[[:space:]]*//p' Makefile)" >> "$GITHUB_OUTPUT"
 
-      - name: Record submodule commit
-        run: git -C vendor/logos-storage-nim rev-parse HEAD > vendor/logos-storage-nim/.storage-commit
-
-      - name: Cache libstorage build
+      - name: Cache libstorage
         id: cache-libstorage
         uses: actions/cache@v4
         with:
-          path: vendor/logos-storage-nim/build
-          key: ${{ runner.os }}-libstorage-${{ hashFiles('vendor/logos-storage-nim/.storage-commit') }}
+          path: libs
+          key: libstorage-${{ runner.os }}-${{ runner.arch }}-${{ steps.libstorage.outputs.version }}
 
-      - name: Build libstorage
+      - name: Fetch libstorage
         if: steps.cache-libstorage.outputs.cache-hit != 'true'
-        run: |
-          make update
-          STORAGE_LIB_PARAMS="-d:storage_enable_api_debug_peers=true" make libstorage
+        run: make fetch
+
+      # Windows has no rpath: the DLL is found through the PATH
+      - name: Add libs to PATH (Windows)
+        if: runner.os == 'Windows'
+        run: echo "${{ github.workspace }}\libs" >> "$GITHUB_PATH"
 
       - name: Build Logos Storage go
         run: make

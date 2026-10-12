@@ -2,12 +2,16 @@ package storage
 
 import (
 	"log"
+	"path/filepath"
 	"testing"
 )
 
 func TestConnectWithAddress(t *testing.T) {
 	var node1, node2 *StorageNode
 	var err error
+
+	dataDir1 := filepath.Join(t.TempDir(), "data")
+	dataDir2 := filepath.Join(t.TempDir(), "data")
 
 	t.Cleanup(func() {
 		if node1 != nil {
@@ -32,7 +36,7 @@ func TestConnectWithAddress(t *testing.T) {
 	})
 
 	node1, err = New(Config{
-		DataDir:        t.TempDir(),
+		DataDir:        dataDir1,
 		LogFormat:      LogFormatNoColors,
 		MetricsEnabled: false,
 		DiscoveryPort:  8090,
@@ -47,7 +51,7 @@ func TestConnectWithAddress(t *testing.T) {
 	}
 
 	node2, err = New(Config{
-		DataDir:        t.TempDir(),
+		DataDir:        dataDir2,
 		LogFormat:      LogFormatNoColors,
 		MetricsEnabled: false,
 		DiscoveryPort:  8091,
