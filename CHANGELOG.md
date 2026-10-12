@@ -1,3 +1,13 @@
+## v0.4.3 (2026-10-08)
+### Notes
+
+- Update Logos Storage Nim to v0.4.3
+- Build: use the Logos Storage Nim release artifacts instead of the submodule.
+  `make fetch` replaces `make update` and `make libstorage`
+- `StoragePeerDebug` does not work with the release artifacts. They are built
+  without `-d:storage_enable_api_debug_peers`
+- CI: run the tests on Linux arm64 and Windows
+
 ## v0.4.2 (2026-08-06)
 ### Notes
 

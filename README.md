@@ -22,7 +22,7 @@ CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 # Fetch configuration
 OS ?= "linux"
 ARCH ?= "amd64"
-VERSION ?= "v0.4.2"
+VERSION ?= "v0.4.3"
 DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-${OS}-${ARCH}-$(VERSION).zip"
 
 # Edit your binary name here
@@ -64,16 +64,16 @@ For an example on how to use this package, please take a look at our [example-go
 
 ## Development
 
-This repo uses the same prebuilt artifacts. Clone it, then fetch the library for your `OS` and `ARCH`
-(default: `linux` and `amd64`):
+This repo uses the same prebuilt artifacts. Clone it, then fetch the library:
 
 ```sh
-OS=darwin ARCH=arm64 make fetch
+make fetch
 ```
 
-The library and its header are stored in the `libs` folder. The version is set by `VERSION` in the `Makefile`.
+The library and its header are stored in the `libs` folder. The OS and the architecture come from `go env`.
+The version is set by `VERSION` in the `Makefile`.
 
-On Windows, use `OS=windows` and add the `libs` folder to your `PATH` before you run the tests.
+On Windows, add the `libs` folder to your `PATH` before you run the tests.
 
 To run the test, you have to make sure you have `gotestsum` installed on your system, e.g.:
 

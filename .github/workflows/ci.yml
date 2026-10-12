@@ -6,26 +6,11 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.target.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        target:
-          - os: ubuntu-latest
-            name: linux
-            cpu: amd64
-
-          - os: ubuntu-24.04-arm
-            name: linux
-            cpu: arm64
-
-          - os: macos-latest
-            name: darwin
-            cpu: arm64
-
-          - os: windows-latest
-            name: windows
-            cpu: amd64
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
 
     steps:
       - name: Checkout
@@ -36,15 +21,21 @@ jobs:
         with:
           go-version-file: go.mod
 
+      # The Makefile holds the libstorage version
+      - name: Cache libstorage
+        id: cache-libstorage
+        uses: actions/cache@v4
+        with:
+          path: libs
+          key: libstorage-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Makefile') }}
+
       - name: Fetch libstorage
-        env:
-          OS: ${{ matrix.target.name }}
-          ARCH: ${{ matrix.target.cpu }}
+        if: steps.cache-libstorage.outputs.cache-hit != 'true'
         run: make fetch
 
       # Windows has no rpath: the DLL is found through the PATH
       - name: Add libs to PATH (Windows)
-        if: matrix.target.name == 'windows'
+        if: runner.os == 'Windows'
         shell: bash
         run: echo "${{ github.workspace }}\libs" >> "$GITHUB_PATH"
 

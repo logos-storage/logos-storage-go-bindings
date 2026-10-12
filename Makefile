@@ -6,19 +6,21 @@ CGO_CFLAGS  := -I$(LIBS_DIR)
 CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 
 # Fetch configuration
-OS ?= "linux"
-ARCH ?= "amd64"
-VERSION ?= "v0.4.3"
-DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-${OS}-${ARCH}-$(VERSION).zip"
+# OS is not set with ?= because Windows defines OS=Windows_NT in the environment
+OS := $(shell go env GOOS)
+ARCH := $(shell go env GOARCH)
+VERSION ?= v0.4.3
+DOWNLOAD_URL := https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip
 
 .PHONY: all clean fetch build test
 
 all: build
 
 fetch:
-	@echo "Fetching libstorage from GitHub Actions from: ${DOWNLOAD_URL}"
-	curl -fSL --create-dirs -o $(LIBS_DIR)/libstorage-${OS}-${ARCH}-$(VERSION).zip ${DOWNLOAD_URL}
-	unzip -o -qq $(LIBS_DIR)/libstorage-${OS}-${ARCH}-$(VERSION).zip -d $(LIBS_DIR)
+	@echo "Fetching libstorage from $(DOWNLOAD_URL)"
+	rm -Rf $(LIBS_DIR)/*
+	curl -fSL --create-dirs -o $(LIBS_DIR)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip $(DOWNLOAD_URL)
+	unzip -o -qq $(LIBS_DIR)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip -d $(LIBS_DIR)
 	rm -f $(LIBS_DIR)/*.zip
 
 build:
