@@ -1,10 +1,12 @@
-## v0.5.3 (2026-10-08)
+## v0.5.3 (2026-10-12)
 ### Notes
 
 - Update Logos Storage Nim to v0.5.3
 - Breaking: `Config.DiscoveryPort` is removed
 - Breaking: `TogglePrivateQueries` is removed. Use `Private` in the download
   and fetch options
+- Breaking: a node with `MixEnabled` and `DhtMixProxies` no longer sends all
+  its DHT queries through Mix. Only the calls that set `Private` use Mix
 - Breaking: `DownloadManifest` takes a `DownloadManifestOptions` and `Fetch`
   takes a `FetchOptions`
 - Breaking: `DebugInfo.ProviderAddresses` and `DebugInfo.DiscoveryAddresses`

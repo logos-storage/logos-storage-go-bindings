@@ -209,9 +209,9 @@ type Config struct {
 	// Default: "" (no log file)
 	LogFile string `json:"log-file,omitempty"`
 
-	// Route DHT provider lookups through the Mix protocol via the
-	// DhtMixProxies. Hides the requester's identity from the proxy.
-	// Required by the Private option of the download and fetch calls.
+	// Enable the Mix protocol: DHT provider lookups can be routed through
+	// the DhtMixProxies, which hides the requester's identity from the proxy.
+	// Mix is only used by the download and fetch calls that set Private.
 	// Default: false
 	MixEnabled bool `json:"mix-enabled,omitempty"`
 

@@ -310,7 +310,7 @@ space, err := node.Space()
 
 cid := "..."
 err := node.Delete(cid)
-err := node.Fetch(cid, FetchOptions{})
+manifest, err := node.Fetch(cid, FetchOptions{})
 ```
 
 The `Fetch` method downloads remote data into your local node.
@@ -321,7 +321,7 @@ By default, a dataset is announced to the DHT and served to other peers.
 Set `NoAdvertise` in the upload, download or fetch options to keep it on your node only:
 
 ```go
-cid, err := storage.UploadFile(ctx, UploadOptions{Filepath: "./testdata/hello.txt", NoAdvertise: true})
+cid, err := node.UploadFile(ctx, UploadOptions{Filepath: "./testdata/hello.txt", NoAdvertise: true})
 ```
 
 `NoAdvertise` is ignored by a download or a fetch when the manifest is already on your node.

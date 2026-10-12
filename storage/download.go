@@ -38,7 +38,7 @@ type OnDownloadProgressFunc func(read, total int, percent float64, err error)
 
 // DownloadStreamOptions is used to download a file
 // in a streaming manner in Logos Storage.
-type DownloadStreamOptions = struct {
+type DownloadStreamOptions struct {
 	// Filepath is the path destination used by DownloadStream.
 	// If it is set, the content will be written into the specified
 	// path.
@@ -86,7 +86,7 @@ type DownloadStreamOptions = struct {
 }
 
 // DownloadInitOptions is used to create a download session.
-type DownloadInitOptions = struct {
+type DownloadInitOptions struct {
 	// Local defines the way to download the content.
 	// If true, the content will be downloaded from the
 	// local node.
@@ -109,7 +109,7 @@ type DownloadInitOptions = struct {
 }
 
 // DownloadManifestOptions is used to retrieve a manifest.
-type DownloadManifestOptions = struct {
+type DownloadManifestOptions struct {
 	// Private, if true, the manifest is fetched through the Mix transport.
 	Private bool
 

@@ -71,6 +71,23 @@ func newStorageNode(t *testing.T, opts ...Config) *StorageNode {
 	return node
 }
 
+func twoNodesHelper(t *testing.T) (*StorageNode, *StorageNode) {
+	t.Helper()
+
+	node1 := newStorageNode(t)
+
+	spr, err := node1.Spr()
+	if err != nil {
+		t.Fatalf("Failed to get spr: %v", err)
+	}
+
+	node2 := newStorageNode(t, Config{
+		BootstrapNodes: []string{spr},
+	})
+
+	return node1, node2
+}
+
 func uploadHelper(t *testing.T, storage *StorageNode) (string, int) {
 	t.Helper()
 

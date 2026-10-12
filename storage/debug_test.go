@@ -20,6 +20,9 @@ func TestDebug(t *testing.T) {
 	if info.Spr == "" {
 		t.Error("Debug info Spr is empty")
 	}
+	if info.PeersTable.LocalNode.PeerId == "" {
+		t.Error("Debug info local node PeerId is empty")
+	}
 }
 
 func runAndReadLogHelper(t *testing.T, node *StorageNode, logFile string) string {

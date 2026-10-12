@@ -92,6 +92,24 @@ func TestFetchCidDoesNotExist(t *testing.T) {
 	}
 }
 
+func TestFetchNoAdvertise(t *testing.T) {
+	node1, node2 := twoNodesHelper(t)
+
+	cid, _ := uploadHelper(t, node1)
+
+	if _, err := node2.Fetch(cid, FetchOptions{NoAdvertise: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	advertised, err := node2.GetAdvertise(cid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if advertised {
+		t.Fatal("expected cid to not be advertised")
+	}
+}
+
 func TestDelete(t *testing.T) {
 	storage := newStorageNode(t)
 
