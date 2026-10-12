@@ -11,11 +11,12 @@ func defaultConfigHelper(t *testing.T) Config {
 	t.Helper()
 
 	return Config{
-		DataDir:        filepath.Join(t.TempDir(), "data"),
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		BlockRetries:   3000,
-		Nat:            "extip:127.0.0.1",
+		DataDir:         filepath.Join(t.TempDir(), "data"),
+		LogFormat:       LogFormatNoColors,
+		MetricsEnabled:  false,
+		BlockRetries:    3000,
+		Nat:             "extip:127.0.0.1",
+		NoBootstrapNode: true,
 	}
 }
 
@@ -40,6 +41,10 @@ func newStorageNode(t *testing.T, opts ...Config) *StorageNode {
 
 		if config.Nat == "" {
 			config.Nat = defaults.Nat
+		}
+
+		if len(config.BootstrapNodes) == 0 && config.Network == "" {
+			config.NoBootstrapNode = true
 		}
 	}
 

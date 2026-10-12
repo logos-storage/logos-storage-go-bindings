@@ -36,10 +36,11 @@ func TestConnectWithAddress(t *testing.T) {
 	})
 
 	node1, err = New(Config{
-		DataDir:        dataDir1,
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		Nat:            "extip:127.0.0.1",
+		DataDir:         dataDir1,
+		LogFormat:       LogFormatNoColors,
+		MetricsEnabled:  false,
+		Nat:             "extip:127.0.0.1",
+		NoBootstrapNode: true,
 	})
 	if err != nil {
 		t.Fatalf("Failed to create Logos Storage node 1: %v", err)
@@ -50,10 +51,11 @@ func TestConnectWithAddress(t *testing.T) {
 	}
 
 	node2, err = New(Config{
-		DataDir:        dataDir2,
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		Nat:            "extip:127.0.0.1",
+		DataDir:         dataDir2,
+		LogFormat:       LogFormatNoColors,
+		MetricsEnabled:  false,
+		Nat:             "extip:127.0.0.1",
+		NoBootstrapNode: true,
 	})
 	if err != nil {
 		t.Fatalf("Failed to create Logos Storage node 2: %v", err)
