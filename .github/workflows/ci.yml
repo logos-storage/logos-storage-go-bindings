@@ -24,10 +24,9 @@ jobs:
         with:
           go-version-file: go.mod
 
-      # The Makefile holds the libstorage version
       - name: Read libstorage version
         id: libstorage
-        run: echo "version=$(grep '^VERSION' Makefile | cut -d' ' -f3)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(sed -n 's/^VERSION[[:space:]]*:=[[:space:]]*//p' Makefile)" >> "$GITHUB_OUTPUT"
 
       - name: Cache libstorage
         id: cache-libstorage
