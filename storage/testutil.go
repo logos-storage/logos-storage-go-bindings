@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"context"
+	"path/filepath"
 	"testing"
 )
 
@@ -10,7 +11,7 @@ func defaultConfigHelper(t *testing.T) Config {
 	t.Helper()
 
 	return Config{
-		DataDir:        t.TempDir(),
+		DataDir:        filepath.Join(t.TempDir(), "data"),
 		LogFormat:      LogFormatNoColors,
 		MetricsEnabled: false,
 		BlockRetries:   3000,
