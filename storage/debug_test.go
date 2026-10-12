@@ -2,6 +2,7 @@ package storage
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -24,53 +25,63 @@ func TestDebug(t *testing.T) {
 	}
 }
 
-func TestUpdateLogLevel(t *testing.T) {
-	tmpFile, err := os.CreateTemp("", "storage-log-*.log")
-	if err != nil {
-		t.Fatalf("Failed to create temp log file: %v", err)
-	}
-	defer os.Remove(tmpFile.Name())
+func runAndReadLogHelper(t *testing.T, node *StorageNode, logFile string) string {
+	t.Helper()
 
-	node := newStorageNode(t, Config{
-		LogLevel:  "INFO",
-		LogFile:   tmpFile.Name(),
-		LogFormat: LogFormatNoColors,
-	})
-
-	content, err := os.ReadFile(tmpFile.Name())
-
-	if err != nil {
-		t.Fatalf("Failed to read log file: %v", err)
-	}
-	if !strings.Contains(string(content), "INF") {
-		t.Errorf("Log file does not contain INFO statement %s", string(content))
-	}
-
-	err = node.UpdateLogLevel("ERROR")
-	if err != nil {
-		t.Fatalf("UpdateLogLevel call failed: %v", err)
+	if err := node.Start(); err != nil {
+		t.Fatalf("Failed to start Logos Storage node: %v", err)
 	}
 
 	if err := node.Stop(); err != nil {
 		t.Fatalf("Failed to stop Logos Storage node: %v", err)
 	}
 
-	// Clear the file
-	if err := os.WriteFile(tmpFile.Name(), []byte{}, 0644); err != nil {
-		t.Fatalf("Failed to clear log file: %v", err)
+	if err := node.Destroy(); err != nil {
+		t.Fatalf("Failed to destroy Logos Storage node: %v", err)
 	}
 
-	err = node.Start()
-	if err != nil {
-		t.Fatalf("Failed to start Logos Storage node: %v", err)
-	}
-
-	content, err = os.ReadFile(tmpFile.Name())
+	content, err := os.ReadFile(logFile)
 	if err != nil {
 		t.Fatalf("Failed to read log file: %v", err)
 	}
 
-	if strings.Contains(string(content), "INF") {
-		t.Errorf("Log file contains INFO statement after log level update: %s", string(content))
+	return string(content)
+}
+
+func TestLogLevel(t *testing.T) {
+	config := defaultConfigHelper(t)
+	config.LogLevel = "ERROR"
+	config.LogFile = filepath.Join(t.TempDir(), "storage.log")
+
+	node, err := New(config)
+	if err != nil {
+		t.Fatalf("Failed to create Logos Storage node: %v", err)
+	}
+
+	content := runAndReadLogHelper(t, node, config.LogFile)
+
+	if strings.Contains(content, "INF") {
+		t.Errorf("Log file contains INFO statement with ERROR log level: %s", content)
+	}
+}
+
+func TestUpdateLogLevel(t *testing.T) {
+	config := defaultConfigHelper(t)
+	config.LogLevel = "ERROR"
+	config.LogFile = filepath.Join(t.TempDir(), "storage.log")
+
+	node, err := New(config)
+	if err != nil {
+		t.Fatalf("Failed to create Logos Storage node: %v", err)
+	}
+
+	if err := node.UpdateLogLevel("INFO"); err != nil {
+		t.Fatalf("UpdateLogLevel call failed: %v", err)
+	}
+
+	content := runAndReadLogHelper(t, node, config.LogFile)
+
+	if !strings.Contains(content, "INF") {
+		t.Errorf("Log file does not contain INFO statement after log level update: %s", content)
 	}
 }
