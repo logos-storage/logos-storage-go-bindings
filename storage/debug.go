@@ -130,6 +130,7 @@ func (node StorageNode) UpdateLogLevel(logLevel string) error {
 // StoragePeerDebug retrieves the peer record for a given peer ID.
 // This function is available only if the flag
 // -d:storage_enable_api_debug_peers=true was set at build time.
+// The release artifacts are built without this flag.
 func (node StorageNode) StoragePeerDebug(peerId string) (PeerRecord, error) {
 	var record PeerRecord
 

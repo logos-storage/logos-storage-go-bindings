@@ -23,7 +23,7 @@ CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 # OS is not set with ?= because Windows defines OS=Windows_NT in the environment
 OS := $(shell go env GOOS)
 ARCH := $(shell go env GOARCH)
-VERSION ?= v0.4.3
+VERSION := v0.4.3
 DOWNLOAD_URL := https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip
 
 # Edit your binary name here
@@ -82,6 +82,7 @@ make fetch
 The library and its header are stored in the `libs` folder. The version is set by `VERSION` in the `Makefile`.
 
 To use a library you built yourself, put the library and `libstorage.h` in the `libs` folder instead.
+`make fetch` and `make clean` empty this folder.
 
 On Windows, add the `libs` folder to your `PATH` before you run the tests.
 
@@ -333,7 +334,7 @@ peerId := "..."
 record, err := node.StoragePeerDebug(peerId)
 ```
 
-`StoragePeerDebug` is only available if you built with `-d:STORAGE_enable_api_debug_peers=true` flag.
+`StoragePeerDebug` is only available if you built with `-d:storage_enable_api_debug_peers=true` flag.
 The prebuilt artifacts are built without this flag.
 
 ### Context and cancellation

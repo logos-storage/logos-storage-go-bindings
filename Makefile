@@ -9,7 +9,7 @@ CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 # OS is not set with ?= because Windows defines OS=Windows_NT in the environment
 OS := $(shell go env GOOS)
 ARCH := $(shell go env GOARCH)
-VERSION ?= v0.4.3
+VERSION := v0.4.3
 DOWNLOAD_URL := https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip
 
 .PHONY: all clean fetch build test

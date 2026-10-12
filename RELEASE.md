@@ -35,23 +35,8 @@ Once released, you can integrate it into your Go project using:
 go get github.com/logos-storage/logos-storage-go-bindings@v0.0.26
 ```
 
-Then you can use the following `Makefile` command to fetch the artifact:
-
-```bash
-LIBS_DIR := $(abspath ./libs)
-STORAGE_OS := linux
-STORAGE_ARCH := amd64
-STORAGE_VERSION := v0.3.2
-STORAGE_DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(STORAGE_VERSION)/libstorage-${STORAGE_OS}-${STORAGE_ARCH}-${STORAGE_VERSION}.zip"
-
-fetch-libstorage:
-    mkdir -p $(LIBS_DIR); \
-    curl -fSL --create-dirs -o $(LIBS_DIR)/libstorage-${STORAGE_OS}-${STORAGE_ARCH}-${STORAGE_VESION}.zip ${STORAGE_DOWNLOAD_URL}; \
-    unzip -o -qq $(LIBS_DIR)/libstorage-${STORAGE_OS}-${STORAGE_ARCH}-${STORAGE_VESION}.zip -d $(LIBS_DIR); \
-    rm -f $(LIBS_DIR)/libstorage*.zip;
-```
-
-`STORAGE_VERSION` is the release version from Logos Storage Nim.
+Then fetch the artifact with the `Makefile` given in the [Usage](./README.md#usage) section of the README.
+Its `VERSION` is the release version from Logos Storage Nim.
 
 ### Nix
 
