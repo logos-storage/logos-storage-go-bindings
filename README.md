@@ -20,9 +20,14 @@ CGO_CFLAGS  := -I$(LIBS_DIR)
 CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 
 # Fetch configuration
-# OS is not set with ?= because Windows defines OS=Windows_NT in the environment
-OS := $(shell go env GOOS)
-ARCH := $(shell go env GOARCH)
+
+# Windows defines OS=Windows_NT in the environment
+ifeq ($(OS),Windows_NT)
+  OS := windows
+endif
+
+OS ?= $(shell go env GOOS)
+ARCH ?= $(shell go env GOARCH)
 VERSION := v0.4.3
 DOWNLOAD_URL := https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip
 
@@ -48,14 +53,14 @@ clean:
 	rm -Rf $(LIBS_DIR)/*
 ```
 
-First you need to `fetch` the artefacts. The OS and the architecture come from `go env`:
+First you need to `fetch` the artifacts. The OS and the architecture come from `go env`:
 
 ```sh
 make fetch
 ```
 
-The artefacts exist for `linux` (`amd64` and `arm64`), `darwin` (`arm64`) and `windows` (`amd64`).
-To fetch the artefacts of another platform, pass `OS` and `ARCH`:
+The artifacts exist for `linux` (`amd64` and `arm64`), `darwin` (`arm64`) and `windows` (`amd64`).
+To fetch the artifacts of another platform, pass `OS` and `ARCH`:
 
 ```sh
 make fetch OS=darwin ARCH=arm64
