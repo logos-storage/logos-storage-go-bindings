@@ -7,6 +7,9 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -22,12 +25,16 @@ jobs:
           go-version-file: go.mod
 
       # The Makefile holds the libstorage version
+      - name: Read libstorage version
+        id: libstorage
+        run: echo "version=$(grep '^VERSION' Makefile | cut -d' ' -f3)" >> "$GITHUB_OUTPUT"
+
       - name: Cache libstorage
         id: cache-libstorage
         uses: actions/cache@v4
         with:
           path: libs
-          key: libstorage-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Makefile') }}
+          key: libstorage-${{ runner.os }}-${{ runner.arch }}-${{ steps.libstorage.outputs.version }}
 
       - name: Fetch libstorage
         if: steps.cache-libstorage.outputs.cache-hit != 'true'
@@ -36,7 +43,6 @@ jobs:
       # Windows has no rpath: the DLL is found through the PATH
       - name: Add libs to PATH (Windows)
         if: runner.os == 'Windows'
-        shell: bash
         run: echo "${{ github.workspace }}\libs" >> "$GITHUB_PATH"
 
       - name: Build Logos Storage go

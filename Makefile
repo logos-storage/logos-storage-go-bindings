@@ -18,10 +18,10 @@ all: build
 
 fetch:
 	@echo "Fetching libstorage from $(DOWNLOAD_URL)"
+	curl -fSL -o $(LIBS_DIR).zip $(DOWNLOAD_URL)
 	rm -Rf $(LIBS_DIR)/*
-	curl -fSL --create-dirs -o $(LIBS_DIR)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip $(DOWNLOAD_URL)
-	unzip -o -qq $(LIBS_DIR)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip -d $(LIBS_DIR)
-	rm -f $(LIBS_DIR)/*.zip
+	unzip -o -qq $(LIBS_DIR).zip -d $(LIBS_DIR)
+	rm -f $(LIBS_DIR).zip
 
 build:
 	@echo "Building Logos Storage Go Bindings..."

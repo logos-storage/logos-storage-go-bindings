@@ -20,23 +20,25 @@ CGO_CFLAGS  := -I$(LIBS_DIR)
 CGO_LDFLAGS := -L$(LIBS_DIR) -lstorage -Wl,-rpath,$(LIBS_DIR)
 
 # Fetch configuration
-OS ?= "linux"
-ARCH ?= "amd64"
-VERSION ?= "v0.4.3"
-DOWNLOAD_URL := "https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-${OS}-${ARCH}-$(VERSION).zip"
+# OS is not set with ?= because Windows defines OS=Windows_NT in the environment
+OS := $(shell go env GOOS)
+ARCH := $(shell go env GOARCH)
+VERSION ?= v0.4.3
+DOWNLOAD_URL := https://github.com/logos-storage/logos-storage-nim/releases/download/$(VERSION)/libstorage-$(OS)-$(ARCH)-$(VERSION).zip
 
 # Edit your binary name here
-ifeq ($(OS),Windows_NT)
+ifeq ($(OS),windows)
   BIN_NAME := example.exe
 else
   BIN_NAME := example
 endif
 
 fetch:
-	@echo "Fetching libstorage from GitHub Actions from: ${DOWNLOAD_URL}"
-	curl -fSL --create-dirs -o $(LIBS_DIR)/libstorage-${OS}-${ARCH}-$(VERSION).zip ${DOWNLOAD_URL}
-	unzip -o -qq $(LIBS_DIR)/libstorage-${OS}-${ARCH}-$(VERSION).zip -d $(LIBS_DIR)
-	rm -f $(LIBS_DIR)/*.zip
+	@echo "Fetching libstorage from $(DOWNLOAD_URL)"
+	curl -fSL -o $(LIBS_DIR).zip $(DOWNLOAD_URL)
+	rm -Rf $(LIBS_DIR)/*
+	unzip -o -qq $(LIBS_DIR).zip -d $(LIBS_DIR)
+	rm -f $(LIBS_DIR).zip
 
 build:
 	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go build -o $(BIN_NAME) main.go
@@ -46,10 +48,17 @@ clean:
 	rm -Rf $(LIBS_DIR)/*
 ```
 
-First you need to `fetch` the artefacts for your `OS` and `ARCH`:
+First you need to `fetch` the artefacts. The OS and the architecture come from `go env`:
 
 ```sh
-OS=darwin ARCH=arm64 make fetch
+make fetch
+```
+
+The artefacts exist for `linux` (`amd64` and `arm64`), `darwin` (`arm64`) and `windows` (`amd64`).
+To fetch the artefacts of another platform, pass `OS` and `ARCH`:
+
+```sh
+make fetch OS=darwin ARCH=arm64
 ```
 
 Then you can build your project using:
@@ -70,8 +79,9 @@ This repo uses the same prebuilt artifacts. Clone it, then fetch the library:
 make fetch
 ```
 
-The library and its header are stored in the `libs` folder. The OS and the architecture come from `go env`.
-The version is set by `VERSION` in the `Makefile`.
+The library and its header are stored in the `libs` folder. The version is set by `VERSION` in the `Makefile`.
+
+To use a library you built yourself, put the library and `libstorage.h` in the `libs` folder instead.
 
 On Windows, add the `libs` folder to your `PATH` before you run the tests.
 
