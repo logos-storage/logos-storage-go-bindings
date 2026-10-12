@@ -36,11 +36,11 @@ func TestConnectWithAddress(t *testing.T) {
 	})
 
 	node1, err = New(Config{
-		DataDir:        dataDir1,
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		DiscoveryPort:  8090,
-		Nat:            "extip:127.0.0.1",
+		DataDir:         dataDir1,
+		LogFormat:       LogFormatNoColors,
+		MetricsEnabled:  false,
+		Nat:             "extip:127.0.0.1",
+		NoBootstrapNode: true,
 	})
 	if err != nil {
 		t.Fatalf("Failed to create Logos Storage node 1: %v", err)
@@ -51,11 +51,11 @@ func TestConnectWithAddress(t *testing.T) {
 	}
 
 	node2, err = New(Config{
-		DataDir:        dataDir2,
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		DiscoveryPort:  8091,
-		Nat:            "extip:127.0.0.1",
+		DataDir:         dataDir2,
+		LogFormat:       LogFormatNoColors,
+		MetricsEnabled:  false,
+		Nat:             "extip:127.0.0.1",
+		NoBootstrapNode: true,
 	})
 	if err != nil {
 		t.Fatalf("Failed to create Logos Storage node 2: %v", err)
@@ -79,9 +79,7 @@ func TestStorageWithPeerId(t *testing.T) {
 	var bootstrap, node1, node2 *StorageNode
 	var err error
 
-	bootstrap = newStorageNode(t, Config{
-		DiscoveryPort: 8092,
-	})
+	bootstrap = newStorageNode(t)
 
 	spr, err := bootstrap.Spr()
 	if err != nil {
@@ -91,12 +89,10 @@ func TestStorageWithPeerId(t *testing.T) {
 	bootstrapNodes := []string{spr}
 
 	node1 = newStorageNode(t, Config{
-		DiscoveryPort:  8090,
 		BootstrapNodes: bootstrapNodes,
 	})
 
 	node2 = newStorageNode(t, Config{
-		DiscoveryPort:  8091,
 		BootstrapNodes: bootstrapNodes,
 	})
 

@@ -148,7 +148,7 @@ func TestDownloadManifest(t *testing.T) {
 	storage := newStorageNode(t)
 	cid, _ := uploadHelper(t, storage)
 
-	manifest, err := storage.DownloadManifest(cid)
+	manifest, err := storage.DownloadManifest(cid, DownloadManifestOptions{})
 	if err != nil {
 		t.Fatal("Error when downloading manifest:", err)
 	}
@@ -161,13 +161,50 @@ func TestDownloadManifest(t *testing.T) {
 func TestDownloadManifestWithNotExistingCid(t *testing.T) {
 	storage := newStorageNode(t, Config{BlockRetries: 1})
 
-	manifest, err := storage.DownloadManifest("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku")
+	manifest, err := storage.DownloadManifest("bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku", DownloadManifestOptions{})
 	if err == nil {
 		t.Fatal("Error when downloading manifest:", err)
 	}
 
 	if manifest.Cid != "" {
 		t.Errorf("expected empty cid, got %q", manifest.Cid)
+	}
+}
+
+func TestDownloadManifestNoAdvertise(t *testing.T) {
+	node1, node2 := twoNodesHelper(t)
+
+	cid, _ := uploadHelper(t, node1)
+
+	if _, err := node2.DownloadManifest(cid, DownloadManifestOptions{NoAdvertise: true}); err != nil {
+		t.Fatal("Error when downloading manifest:", err)
+	}
+
+	advertised, err := node2.GetAdvertise(cid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if advertised {
+		t.Fatal("expected cid to not be advertised")
+	}
+}
+
+func TestDownloadInitNoAdvertise(t *testing.T) {
+	node1, node2 := twoNodesHelper(t)
+
+	cid, _ := uploadHelper(t, node1)
+
+	if err := node2.DownloadInit(cid, DownloadInitOptions{NoAdvertise: true}); err != nil {
+		t.Fatal("Error when initializing download:", err)
+	}
+	defer node2.DownloadCancel(cid)
+
+	advertised, err := node2.GetAdvertise(cid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if advertised {
+		t.Fatal("expected cid to not be advertised")
 	}
 }
 

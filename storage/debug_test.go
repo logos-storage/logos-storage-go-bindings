@@ -20,8 +20,8 @@ func TestDebug(t *testing.T) {
 	if info.Spr == "" {
 		t.Error("Debug info Spr is empty")
 	}
-	if len(info.ProviderAddresses) == 0 {
-		t.Error("Debug info ProviderAddresses is empty")
+	if info.PeersTable.LocalNode.PeerId == "" {
+		t.Error("Debug info local node PeerId is empty")
 	}
 }
 

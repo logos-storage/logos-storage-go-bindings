@@ -92,6 +92,20 @@ func TestPeerId(t *testing.T) {
 	t.Logf("Logos Storage PeerId: %s", peerId)
 }
 
+func TestNetwork(t *testing.T) {
+	node := newStorageNode(t, Config{
+		Network: NetworkLogosDev,
+	})
+
+	network, err := node.Network()
+	if err != nil {
+		t.Fatalf("Failed to get Logos Storage network: %v", err)
+	}
+	if network != string(NetworkLogosDev) {
+		t.Fatalf("expected network %q, got %q", NetworkLogosDev, network)
+	}
+}
+
 func TestGetMetrics(t *testing.T) {
 	node := newStorageNode(t)
 
@@ -120,11 +134,12 @@ func TestCreateAndDestroyMultipleInstancesWithSameDatadir(t *testing.T) {
 	datadir := fmt.Sprintf("%s/special-test", t.TempDir())
 
 	config := Config{
-		DataDir:        datadir,
-		LogFormat:      LogFormatNoColors,
-		MetricsEnabled: false,
-		BlockRetries:   5,
-		Nat:            "extip:127.0.0.1",
+		DataDir:         datadir,
+		LogFormat:       LogFormatNoColors,
+		MetricsEnabled:  false,
+		BlockRetries:    5,
+		Nat:             "extip:127.0.0.1",
+		NoBootstrapNode: true,
 	}
 
 	for range 2 {
