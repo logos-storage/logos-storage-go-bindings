@@ -13,6 +13,12 @@ func TestStorageVersion(t *testing.T) {
 		t.Fatalf("Failed to create Logos Storage node: %v", err)
 	}
 
+	t.Cleanup(func() {
+		if err := node.Destroy(); err != nil {
+			t.Logf("cleanup storage: %v", err)
+		}
+	})
+
 	version := node.Version()
 
 	if version == "" {
@@ -28,6 +34,12 @@ func TestStorageRevision(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create Logos Storage node: %v", err)
 	}
+
+	t.Cleanup(func() {
+		if err := node.Destroy(); err != nil {
+			t.Logf("cleanup storage: %v", err)
+		}
+	})
 
 	revision := node.Revision()
 
